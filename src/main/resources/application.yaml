@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: insider-trading-analyzer
+  shell:
+    interactive:
+      enabled: true
+  main:
+    banner-mode: off
+  datasource:
+    url: jdbc:postgresql://localhost:5432/insider_trading
+    username: insider_user
+    password: insider_pass
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    schemas: public
+  ai:
+    ollama:
+      chat:
+        model: gpt-oss:20b-cloud
+        options:
+          num-ctx: 16384 # 16k
+
+logging:
+  threshold:
+    console: ERROR

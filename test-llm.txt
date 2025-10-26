@@ -1,0 +1,68 @@
+Filing ID #20029060
+PERIODIC TRANSACTION REPORT
+Clerk of the House of Representatives • Legislative Resource Center • B81 Cannon Building ⚫ Washington, DC 20515
+FILER INFORMATION
+Hon. David J. Taylor
+Name:
+Status:
+Member
+State/District: OH02
+TRANSACTIONS
+ID
+Owner Asset
+Transaction Date
+Notification Amount
+Туре
+Date
+Cap.
+Gains >
+$200?
+Amazon.com, Inc. - Common Stock
+(AMZN) [ST]
+P
+03/27/2025 03/31/2025
+$1,001 - $15,000
+FILING STATUS: New
+SUBHOLDING OF: David Taylor Trust > Schwab Joint Brokerage #1 (Home Grown)
+American Electric Power Company,
+S
+03/10/2025 03/31/2025
+$1,001-$15,000
+Inc. (AEP) [ST]
+FILING STATUS: New
+SUBHOLDING OF: David Taylor Trust > Schwab Joint Brokerage #1 (Home Grown)
+AT&T Inc. (T) [ST]
+FILING STATUS: New
+S
+03/10/2025 03/31/2025
+$1,001 - $15,000
+SUBHOLDING OF: David Taylor Trust > Schwab Joint Brokerage #1 (Home Grown)
+Eaton Corporation, PLC Ordinary
+Shares (ETN) [ST]
+P
+03/10/2025 03/31/2025 $1,001-$15,000
+FILING STATUS: New
+SUBHOLDING OF: David Taylor Trust > Schwab Joint Brokerage #1 (Home Grown)
+JP Morgan Chase & Co. Common
+Stock (JPM) [ST]
+P
+FILING STATUS: New
+03/10/2025 03/31/2025 $1,001-$15,000
+SUBHOLDING OF: David Taylor Trust > Schwab Joint Brokerage #1 (Home Grown)
+Parker-Hannifin Corporation
+Common Stock (PH) [ST]
+P
+03/10/2025 03/31/2025 $1,001 - $15,000
+FILING STATUS: New
+SUBHOLDING OF: David Taylor Trust > Schwab Joint Brokerage #1 (Home Grown)
+* For the complete list of asset type abbreviations, please visit https://fd.house.gov/reference/asset-type-codes.aspx.
+INVESTMENt Vehicle DETAILS
+。 David Taylor Trust
+。 David Taylor Trust ⇒ Schwab Joint Brokerage #1 (Home Grown)
+INITIAL Public OfferINGS
+Yes
+No
+CERTIFICATION AND SIGNATURE
+I CERTIFY that the statements I have made on the attached Periodic Transaction Report are true, complete, and correct to the best of
+my knowledge and belief. Further, I CERTIFY that I have disclosed all transactions as required by the STOCK Act.
+Digitally Signed: Hon. David J. Taylor, 04/03/2025
