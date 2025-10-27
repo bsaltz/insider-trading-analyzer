@@ -6,8 +6,8 @@ services:
       POSTGRES_DB: insider_trading
       POSTGRES_USER: insider_user
       POSTGRES_PASSWORD: insider_pass
-    ports:
-      - "5432:5432"
+    ports: # Local port is +10000 to avoid conflicts with local postgres
+      - "15432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init:/docker-entrypoint-initdb.d

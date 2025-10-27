@@ -7,7 +7,7 @@ spring:
   main:
     banner-mode: off
   datasource:
-    url: jdbc:postgresql://localhost:5432/insider_trading
+    url: jdbc:postgresql://localhost:15432/insider_trading
     username: insider_user
     password: insider_pass
     driver-class-name: org.postgresql.Driver
