@@ -26,10 +26,10 @@ class HouseFilingListService(
     private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("M/d/yyyy")
     private val expectedHeader = "Prefix\tLast\tFirst\tSuffix\tFilingType\tStateDst\tYear\tFilingDate\tDocID"
 
-    fun getHouseFilingList(year: Int): HouseFilingList? =
-        houseFilingListRepository.findByYear(year)
-    fun getHouseFilingListRow(docId: String): HouseFilingListRow? =
-        houseFilingListRowRepository.findByDocId(docId)
+    fun getHouseFilingList(year: Int): HouseFilingList? = houseFilingListRepository.findByYear(year)
+
+    fun getHouseFilingListRow(docId: String): HouseFilingListRow? = houseFilingListRowRepository.findByDocId(docId)
+
     fun getHouseFilingListRows(houseFilingListId: Long): List<HouseFilingListRow> =
         houseFilingListRowRepository.findByHouseFilingListId(houseFilingListId)
 
@@ -42,25 +42,32 @@ class HouseFilingListService(
      * will be saved to the database.
      */
     @Transactional
-    fun processYear(year: Int, force: Boolean = false): HouseFilingList {
-        val existingFilingList = houseFilingListRepository.findByYear(year)
-            ?: houseFilingListRepository.save(
-                HouseFilingList(
-                    year = year,
-                    etag = null,
-                    gcsUri = getListGcsUri(year),
-                    parsed = false,
-                    parsedAt = null,
-                    createdAt = clock.instant(),
-                    updatedAt = null,
+    fun processYear(
+        year: Int,
+        force: Boolean = false,
+    ): HouseFilingList {
+        val existingFilingList =
+            houseFilingListRepository.findByYear(year)
+                ?: houseFilingListRepository.save(
+                    HouseFilingList(
+                        year = year,
+                        etag = null,
+                        gcsUri = getListGcsUri(year),
+                        parsed = false,
+                        parsedAt = null,
+                        createdAt = clock.instant(),
+                        updatedAt = null,
+                    ),
                 )
-            )
         return parse(downloadTsv(existingFilingList, force), force)
     }
 
     private fun getListGcsUri(year: Int): String = "gs://insider-trading-analyzer/congress/house/disclosure-list/$year.zip"
 
-    private fun downloadTsv(houseFilingList: HouseFilingList, force: Boolean): HouseFilingList {
+    private fun downloadTsv(
+        houseFilingList: HouseFilingList,
+        force: Boolean,
+    ): HouseFilingList {
         val execute = force || houseFilingList.etag == null || houseFilingList.etag != getEtag(houseFilingList.year)
         if (!execute) return houseFilingList
         val etag = houseHttpClient.getFilingListEtag(houseFilingList.year)
@@ -97,7 +104,10 @@ class HouseFilingListService(
      * 	Albright	Joe		X	IL16	2025	5/22/2025	30023834
      * ```
      */
-    private fun parse(houseFilingList: HouseFilingList, force: Boolean): HouseFilingList {
+    private fun parse(
+        houseFilingList: HouseFilingList,
+        force: Boolean,
+    ): HouseFilingList {
         if (!force && houseFilingList.parsed) return houseFilingList
 
         // Download the ZIP file from GCS to a temporary file
@@ -143,7 +153,10 @@ class HouseFilingListService(
         return houseFilingListRepository.save(houseFilingList.copy(parsed = true, parsedAt = clock.instant()))
     }
 
-    private fun parseRow(line: String, houseFilingList: HouseFilingList): HouseFilingListRow {
+    private fun parseRow(
+        line: String,
+        houseFilingList: HouseFilingList,
+    ): HouseFilingListRow {
         val (prefix, last, first, suffix, filingType, stateDst, year, filingDate, docId) = line.split('\t')
         return HouseFilingListRow(
             houseFilingListId = houseFilingList.id ?: error("HouseFilingList ID must not be null"),

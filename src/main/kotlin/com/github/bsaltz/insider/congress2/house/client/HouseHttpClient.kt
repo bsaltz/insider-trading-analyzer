@@ -12,14 +12,19 @@ import java.nio.ByteBuffer
 import kotlin.collections.firstOrNull
 
 @Service
-class HouseHttpClient(private val storage: Storage) {
+class HouseHttpClient(
+    private val storage: Storage,
+) {
     private val restClient: RestClient =
         RestClient
             .builder()
             .defaultHeader(HttpHeaders.USER_AGENT, USER_AGENT)
             .build()
 
-    fun fetchFilingList(year: Int, gcsUri: String): StoredResponse {
+    fun fetchFilingList(
+        year: Int,
+        gcsUri: String,
+    ): StoredResponse {
         val entity = filingListGetEntity(year)
         val location = storeResponse(gcsUri, entity)
         return StoredResponse(
@@ -37,8 +42,9 @@ class HouseHttpClient(private val storage: Storage) {
     ): StoredResponse {
         val entity = ptrGetEntity(docId, year)
         val location = storeResponse(gcsUri, entity)
-        val etag = entity.headers[HttpHeaders.ETAG]?.firstOrNull()
-            ?: error("No etag found for disclosure doc $year/$docId")
+        val etag =
+            entity.headers[HttpHeaders.ETAG]?.firstOrNull()
+                ?: error("No etag found for disclosure doc $year/$docId")
         return StoredResponse(location, etag)
     }
 
@@ -47,8 +53,7 @@ class HouseHttpClient(private val storage: Storage) {
         year: Int,
     ): String? = ptrHeadHeaders(docId, year)[HttpHeaders.ETAG]?.firstOrNull()
 
-    private fun filingListUrl(year: Int): String =
-        "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/${year}FD.zip"
+    private fun filingListUrl(year: Int): String = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/${year}FD.zip"
 
     private fun filingListGetEntity(year: Int): ResponseEntity<Resource> =
         restClient
@@ -65,8 +70,10 @@ class HouseHttpClient(private val storage: Storage) {
             .toBodilessEntity()
             .headers
 
-    private fun ptrDocUrl(docId: String, year: Int): String =
-        "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/$year/$docId.pdf"
+    private fun ptrDocUrl(
+        docId: String,
+        year: Int,
+    ): String = "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/$year/$docId.pdf"
 
     private fun ptrGetEntity(
         docId: String,

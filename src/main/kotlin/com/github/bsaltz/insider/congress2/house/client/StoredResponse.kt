@@ -9,6 +9,5 @@ data class StoredResponse(
     val googleStorageLocation: GoogleStorageLocation,
     val etag: String,
 ) {
-    fun toResource(storage: Storage): GoogleStorageResource =
-        googleStorageLocation.toResource(storage)
+    fun toResource(storage: Storage): GoogleStorageResource = googleStorageLocation.toResource(storage)
 }

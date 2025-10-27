@@ -13,7 +13,8 @@ import org.springframework.stereotype.Service
 class HouseLlmService(
     private val chatModel: ChatModel,
 ) {
-    private val initialPromptTemplate = """
+    private val initialPromptTemplate =
+        """
         I pulled a Periodic Transaction Report (PTR) for a US House Representative and ran the PDF through GCP's Vision
         AI/OCR parser, and this was the result:
 
@@ -67,16 +68,19 @@ class HouseLlmService(
             }
           ]
         }
-    """.trimIndent()
-    private val reflectionPrompt = """
+        """.trimIndent()
+    private val reflectionPrompt =
+        """
         Reflect on the input from OCR and your output and make corrections, including updating the certainty score if
         your confidence increases. Output the corrected JSON only.
-    """.trimIndent()
+        """.trimIndent()
 
     private val outputConverter = BeanOutputConverter(HouseLlmOutput::class.java)
-    private val ollamaOptions: OllamaOptions = OllamaOptions.builder()
-        .format(outputConverter.jsonSchemaMap)
-        .build()
+    private val ollamaOptions: OllamaOptions =
+        OllamaOptions
+            .builder()
+            .format(outputConverter.jsonSchemaMap)
+            .build()
 
     fun process(ocrParseResult: String): Pair<HouseLlmOutput, String> =
         getChatResponseFromOcr(ocrParseResult).let { response ->
@@ -84,23 +88,23 @@ class HouseLlmService(
         } ?: error("Failed to convert LLM response to JSON")
 
     private fun getChatResponseFromOcr(ocrParseResult: String): String =
-        chatModel.call(createPrompt(ocrParseResult))
+        chatModel
+            .call(createPrompt(ocrParseResult))
             .result.output.text
             ?: error("No response from LLM")
 
     private fun createPrompt(ocrParseResult: String): Prompt =
-        Prompt.builder()
+        Prompt
+            .builder()
             .messages(
                 listOf(
                     UserMessage(initialPrompt(ocrParseResult)),
                     UserMessage(reflectionPrompt),
-                )
-            )
-            .chatOptions(ollamaOptions)
+                ),
+            ).chatOptions(ollamaOptions)
             .build()
 
-    private fun initialPrompt(ocrParseResult: String): String =
-        initialPromptTemplate.replace("{{ocr_parse_result}}", ocrParseResult)
+    private fun initialPrompt(ocrParseResult: String): String = initialPromptTemplate.replace("{{ocr_parse_result}}", ocrParseResult)
 }
 
 data class HouseLlmOutput(

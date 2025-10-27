@@ -4,5 +4,6 @@ import org.springframework.data.repository.CrudRepository
 
 interface HousePtrOcrResultRepository : CrudRepository<HousePtrOcrResult, Long> {
     fun findByHousePtrDownloadId(housePtrDownloadId: Long): HousePtrOcrResult?
+
     fun findByDocId(docId: String): HousePtrOcrResult?
 }

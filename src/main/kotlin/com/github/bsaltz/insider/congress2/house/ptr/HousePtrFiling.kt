@@ -1,6 +1,5 @@
 package com.github.bsaltz.insider.congress2.house.ptr
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.springframework.data.annotation.Id
 import java.time.Instant
 

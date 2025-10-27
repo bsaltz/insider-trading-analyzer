@@ -18,9 +18,7 @@ data class ParsedPeriodicTransactionReportTransaction(
     val fileSourceUrl: String,
     val parsedDate: LocalDate = LocalDate.now(),
 ) {
-    fun toTransactionEntity(
-        periodicTransactionReportId: Long,
-    ): PeriodicTransactionReportTransaction =
+    fun toTransactionEntity(periodicTransactionReportId: Long): PeriodicTransactionReportTransaction =
         PeriodicTransactionReportTransaction(
             periodicTransactionReportId = periodicTransactionReportId,
             owner = owner,

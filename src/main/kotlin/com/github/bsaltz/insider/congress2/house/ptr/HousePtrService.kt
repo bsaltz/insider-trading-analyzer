@@ -1,6 +1,7 @@
 package com.github.bsaltz.insider.congress2.house.ptr
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.github.bsaltz.insider.congress2.house.client.HouseHttpClient
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListRow
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListService
@@ -28,44 +29,65 @@ class HousePtrService(
     private val objectMapper: ObjectMapper,
     private val clock: Clock,
 ) {
-    fun processFilingListRow(docId: String, force: Boolean = false): HousePtrFiling =
+    fun processFilingListRow(
+        docId: String,
+        force: Boolean = false,
+    ): HousePtrFiling =
         processFilingListRow(houseFilingListService.getHouseFilingListRow(docId) ?: error("No row for docId: $docId"), force)
 
-    fun processFilingListRow(houseFilingListRow: HouseFilingListRow, force: Boolean = false): HousePtrFiling =
+    fun processFilingListRow(
+        houseFilingListRow: HouseFilingListRow,
+        force: Boolean = false,
+    ): HousePtrFiling =
         downloadPdf(houseFilingListRow.docId, houseFilingListRow.year, force)
             .let { download -> runOcr(houseFilingListRow.year, download, force) }
             .let { ocrResult -> parseFiling(ocrResult, force) }
 
-    fun downloadPdf(docId: String, force: Boolean = false): HousePtrDownload {
-        val houseFilingListRow = houseFilingListService.getHouseFilingListRow(docId)
-            ?: error("No row for docId: $docId")
+    fun downloadPdf(
+        docId: String,
+        force: Boolean = false,
+    ): HousePtrDownload {
+        val houseFilingListRow =
+            houseFilingListService.getHouseFilingListRow(docId)
+                ?: error("No row for docId: $docId")
         return downloadPdf(docId, houseFilingListRow.year, force)
     }
 
-    private fun downloadPdf(docId: String, year: Int, force: Boolean = false): HousePtrDownload {
+    private fun downloadPdf(
+        docId: String,
+        year: Int,
+        force: Boolean = false,
+    ): HousePtrDownload {
         val existingDownload = housePtrDownloadRepository.findByDocId(docId)
         val etag = houseHttpClient.getPtrEtag(docId, year)
         if (existingDownload != null && !force && existingDownload.etag == etag) return existingDownload
         val gcsUri = getDocGcsUri(docId, year)
         val response = houseHttpClient.fetchPtr(docId, year, gcsUri)
-        val download = existingDownload?.copy(etag = response.etag) ?: HousePtrDownload(
-            docId = docId,
-            gcsUri = gcsUri,
-            etag = response.etag,
-            parsed = false,
-            parsedAt = null,
-            createdAt = clock.instant(),
-            updatedAt = null,
-        )
+        val download =
+            existingDownload?.copy(etag = response.etag) ?: HousePtrDownload(
+                docId = docId,
+                gcsUri = gcsUri,
+                etag = response.etag,
+                parsed = false,
+                parsedAt = null,
+                createdAt = clock.instant(),
+                updatedAt = null,
+            )
         return housePtrDownloadRepository.save(download)
     }
 
-    private fun getDocGcsUri(docId: String, year: Int): String =
-        "gs://insider-trading-analyzer/congress/house/$year/$docId.pdf"
+    private fun getDocGcsUri(
+        docId: String,
+        year: Int,
+    ): String = "gs://insider-trading-analyzer/congress/house/$year/$docId.pdf"
 
-    fun runOcr(docId: String, force: Boolean = false): HousePtrOcrResult {
-        val houseFilingListRow = houseFilingListService.getHouseFilingListRow(docId)
-            ?: error("No row for docId: $docId")
+    fun runOcr(
+        docId: String,
+        force: Boolean = false,
+    ): HousePtrOcrResult {
+        val houseFilingListRow =
+            houseFilingListService.getHouseFilingListRow(docId)
+                ?: error("No row for docId: $docId")
         val housePtrDownload = housePtrDownloadRepository.findByDocId(docId) ?: error("No download for docId: $docId")
         return runOcr(houseFilingListRow.year, housePtrDownload, force)
     }
@@ -73,7 +95,7 @@ class HousePtrService(
     private fun runOcr(
         year: Int,
         housePtrDownload: HousePtrDownload,
-        force: Boolean = false
+        force: Boolean = false,
     ): HousePtrOcrResult {
         val housePtrDownloadId = housePtrDownload.id ?: error("No id for housePtrDownload")
         val existingOcrResult = housePtrOcrResultRepository.findByHousePtrDownloadId(housePtrDownloadId)
@@ -81,27 +103,38 @@ class HousePtrService(
         val result = ocrProcessorService.parsePdf(GoogleStorageLocation(housePtrDownload.gcsUri)).response
         val gcsUri = getOcrGcsUri(housePtrDownload.docId, year)
         storage.getResource(gcsUri).outputStream.use { it.write(result.toByteArray()) }
-        val housePtrOcrResult = existingOcrResult?.copy(gcsUri = gcsUri) ?: HousePtrOcrResult(
-            docId = housePtrDownload.docId,
-            housePtrDownloadId = housePtrDownloadId,
-            gcsUri = gcsUri,
-        )
+        val housePtrOcrResult =
+            existingOcrResult?.copy(gcsUri = gcsUri) ?: HousePtrOcrResult(
+                docId = housePtrDownload.docId,
+                housePtrDownloadId = housePtrDownloadId,
+                gcsUri = gcsUri,
+            )
         return housePtrOcrResultRepository.save(housePtrOcrResult)
     }
 
-    private fun getOcrGcsUri(docId: String, year: Int): String =
-        "gs://insider-trading-analyzer/congress/house/$year/$docId.txt"
+    private fun getOcrGcsUri(
+        docId: String,
+        year: Int,
+    ): String = "gs://insider-trading-analyzer/congress/house/$year/$docId.txt"
 
-    fun parseFiling(docId: String, force: Boolean = false): HousePtrFiling {
-        val housePtrOcrResult = housePtrOcrResultRepository.findByDocId(docId)
-            ?: error("No ocr result for docId: $docId")
+    fun parseFiling(
+        docId: String,
+        force: Boolean = false,
+    ): HousePtrFiling {
+        val housePtrOcrResult =
+            housePtrOcrResultRepository.findByDocId(docId)
+                ?: error("No ocr result for docId: $docId")
         return parseFiling(housePtrOcrResult, force)
     }
 
-    private fun parseFiling(ocrResult: HousePtrOcrResult, force: Boolean = false): HousePtrFiling {
-        val ocrResultText = storage.getResource(ocrResult.gcsUri).inputStream.use {
-            it.readBytes().toString(Charsets.UTF_8)
-        }
+    private fun parseFiling(
+        ocrResult: HousePtrOcrResult,
+        force: Boolean = false,
+    ): HousePtrFiling {
+        val ocrResultText =
+            storage.getResource(ocrResult.gcsUri).inputStream.use {
+                it.readBytes().toString(Charsets.UTF_8)
+            }
         val (output, rawLlmResponse) = houseLlmService.process(ocrResultText)
         return output.saveHouseLlmOutput(ocrResult, rawLlmResponse)
     }
@@ -111,14 +144,15 @@ class HousePtrService(
         response: String,
     ): HousePtrFiling {
         // TODO: Delete (or maybe update?) the old records if they exist
-        val housePtrFiling = housePtrFilingRepository.save(
-            HousePtrFiling(
-                housePtrOcrResultId = ocrResult.id ?: error("No ocr result id for docId: ${ocrResult.docId}"),
-                docId = ocrResult.docId,
-                rawLlmResponse = response,
-                createdAt = clock.instant(),
+        val housePtrFiling =
+            housePtrFilingRepository.save(
+                HousePtrFiling(
+                    housePtrOcrResultId = ocrResult.id ?: error("No ocr result id for docId: ${ocrResult.docId}"),
+                    docId = ocrResult.docId,
+                    rawLlmResponse = response,
+                    createdAt = clock.instant(),
+                ),
             )
-        )
         transactions.forEach { transaction ->
             housePtrTransactionRepository.save(transaction.toEntity(housePtrFiling))
         }
@@ -136,6 +170,7 @@ class HousePtrService(
             notificationDate = notificationDate,
             amount = amount,
             certainty = certainty,
-            additionalData = objectMapper.valueToTree(this)
+            // Empty for now
+            additionalData = JsonNodeFactory.instance.objectNode(),
         )
 }

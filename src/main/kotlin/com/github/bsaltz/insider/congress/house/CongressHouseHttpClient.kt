@@ -122,4 +122,3 @@ class CongressHouseHttpClient(
         private const val USER_AGENT = "TradingAnalyzer/1.0"
     }
 }
-

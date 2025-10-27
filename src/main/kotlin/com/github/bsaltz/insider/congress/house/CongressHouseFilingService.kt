@@ -64,10 +64,11 @@ class CongressHouseFilingService(
                     while (entry != null) {
                         if (entry.name == tsvFileName && !entry.isDirectory) {
                             // Extract directly to Google Storage and parse
-                            val extractedResource = com.google.cloud.spring.storage.GoogleStorageResource(
-                                storage,
-                                "gs://insider-trading-analyzer/congress/house/disclosure-list/$year.tsv"
-                            )
+                            val extractedResource =
+                                com.google.cloud.spring.storage.GoogleStorageResource(
+                                    storage,
+                                    "gs://insider-trading-analyzer/congress/house/disclosure-list/$year.tsv",
+                                )
 
                             extractedResource.writableChannel().use { channel ->
                                 val buffer = ByteArray(10240)

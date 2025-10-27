@@ -83,12 +83,13 @@ class CongressHouseFilingParserService {
             }
 
             // Parse and validate year
-            val year = try {
-                yearStr.toInt()
-            } catch (e: NumberFormatException) {
-                println("Validation error: Invalid year '$yearStr' in line: $line")
-                return null
-            }
+            val year =
+                try {
+                    yearStr.toInt()
+                } catch (e: NumberFormatException) {
+                    println("Validation error: Invalid year '$yearStr' in line: $line")
+                    return null
+                }
 
             if (year !in 2000..2100) {
                 println("Validation error: Year $year is out of valid range (2000-2100) in line: $line")
@@ -96,12 +97,13 @@ class CongressHouseFilingParserService {
             }
 
             // Parse and validate filing date
-            val filingDate = try {
-                LocalDate.parse(filingDateStr, dateFormatter)
-            } catch (e: Exception) {
-                println("Validation error: Invalid date format '$filingDateStr' in line: $line")
-                return null
-            }
+            val filingDate =
+                try {
+                    LocalDate.parse(filingDateStr, dateFormatter)
+                } catch (e: Exception) {
+                    println("Validation error: Invalid date format '$filingDateStr' in line: $line")
+                    return null
+                }
 
             return ParsedCongressHouseFiling(
                 docId = docId,
@@ -120,4 +122,3 @@ class CongressHouseFilingParserService {
         }
     }
 }
-

@@ -9,15 +9,15 @@ import org.springframework.web.client.RestClient
 
 @Configuration
 class RestClientConfiguration {
-
     @Bean
     fun restClientBuilder(restClientBuilderConfigurer: RestClientBuilderConfigurer): RestClient.Builder =
         restClientBuilderConfigurer.configure(RestClient.builder()).messageConverters { converters ->
             converters.filterIsInstance<MappingJackson2HttpMessageConverter>().forEach { converter ->
                 // This is a workaround for gpt-oss:20b-cloud returning text/plain instead of application/x-ndjson
-                converter.supportedMediaTypes = converter.supportedMediaTypes + listOf(
-                    MediaType.TEXT_PLAIN
-                )
+                converter.supportedMediaTypes = converter.supportedMediaTypes +
+                    listOf(
+                        MediaType.TEXT_PLAIN,
+                    )
             }
         }
 }
