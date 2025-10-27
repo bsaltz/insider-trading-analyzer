@@ -78,9 +78,10 @@ class HouseLlmService(
         .format(outputConverter.jsonSchemaMap)
         .build()
 
-    fun process(ocrParseResult: String): HouseLlmOutput =
-        outputConverter.convert(getChatResponseFromOcr(ocrParseResult))
-            ?: error("Failed to convert LLM response to JSON")
+    fun process(ocrParseResult: String): Pair<HouseLlmOutput, String> =
+        getChatResponseFromOcr(ocrParseResult).let { response ->
+            outputConverter.convert(response)?.to(response)
+        } ?: error("Failed to convert LLM response to JSON")
 
     private fun getChatResponseFromOcr(ocrParseResult: String): String =
         chatModel.call(createPrompt(ocrParseResult))

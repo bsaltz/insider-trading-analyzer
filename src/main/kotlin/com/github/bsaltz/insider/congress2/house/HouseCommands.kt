@@ -75,7 +75,7 @@ class HouseCommands(
         years: List<Int>?,
     ) {
         val years = years ?: listOf(clock.instant().atZone(clock.zone).year)
-        require(years.all { it > 2008 }) { "Years must be 2008 or later" }
+        require(years.all { it >= 2008 }) { "Years must be 2008 or later" }
         require(years.all { it <= clock.instant().atZone(clock.zone).year }) { "Years cannot be in the future" }
         println("Processing all data for years: $years")
         years.forEach { processYear(it) }
@@ -91,7 +91,8 @@ class HouseCommands(
         require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
         println("Processing data for year $year")
         val filingList = houseFilingListService.processYear(year)
-        val filingListRows = houseFilingListService.getHouseFilingListRows(filingList.id!!)
+        val filingListId = filingList.id ?: error("Filing list ID is null")
+        val filingListRows = houseFilingListService.getHouseFilingListRows(filingListId)
         filingListRows.forEach { housePtrService.processFilingListRow(it) }
         println("Processing completed for year $year")
     }

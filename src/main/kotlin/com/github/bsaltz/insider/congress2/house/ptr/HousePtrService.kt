@@ -11,8 +11,10 @@ import com.github.bsaltz.insider.utils.StorageUtil.getResource
 import com.github.bsaltz.insider.vision.OcrProcessorService
 import com.google.cloud.spring.storage.GoogleStorageLocation
 import com.google.cloud.storage.Storage
+import org.springframework.stereotype.Service
 import java.time.Clock
 
+@Service
 class HousePtrService(
     private val houseFilingListService: HouseFilingListService,
     private val housePtrDownloadRepository: HousePtrDownloadRepository,
@@ -81,7 +83,7 @@ class HousePtrService(
         storage.getResource(gcsUri).outputStream.use { it.write(result.toByteArray()) }
         val housePtrOcrResult = existingOcrResult?.copy(gcsUri = gcsUri) ?: HousePtrOcrResult(
             docId = housePtrDownload.docId,
-            housePtrDownloadId = housePtrDownload.id,
+            housePtrDownloadId = housePtrDownloadId,
             gcsUri = gcsUri,
         )
         return housePtrOcrResultRepository.save(housePtrOcrResult)
@@ -100,20 +102,20 @@ class HousePtrService(
         val ocrResultText = storage.getResource(ocrResult.gcsUri).inputStream.use {
             it.readBytes().toString(Charsets.UTF_8)
         }
-        val output = houseLlmService.process(ocrResultText)
-        return output.saveHouseLlmOutput(ocrResult, ocrResultText)
+        val (output, rawLlmResponse) = houseLlmService.process(ocrResultText)
+        return output.saveHouseLlmOutput(ocrResult, rawLlmResponse)
     }
 
     private fun HouseLlmOutput.saveHouseLlmOutput(
         ocrResult: HousePtrOcrResult,
-        ocrResultText: String,
+        response: String,
     ): HousePtrFiling {
         // TODO: Delete (or maybe update?) the old records if they exist
         val housePtrFiling = housePtrFilingRepository.save(
             HousePtrFiling(
                 housePtrOcrResultId = ocrResult.id ?: error("No ocr result id for docId: ${ocrResult.docId}"),
                 docId = ocrResult.docId,
-                rawLlmResponse = ocrResultText,
+                rawLlmResponse = response,
                 createdAt = clock.instant(),
             )
         )
