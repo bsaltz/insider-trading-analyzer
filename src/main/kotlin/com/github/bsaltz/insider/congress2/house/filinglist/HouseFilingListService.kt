@@ -9,9 +9,11 @@ import com.github.bsaltz.insider.utils.StorageUtil.getResource
 import com.google.cloud.storage.Storage
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.nio.file.Files
 import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.zip.ZipInputStream
 
 @Service
 class HouseFilingListService(
@@ -97,23 +99,47 @@ class HouseFilingListService(
      */
     private fun parse(houseFilingList: HouseFilingList, force: Boolean): HouseFilingList {
         if (!force && houseFilingList.parsed) return houseFilingList
-        storage.getResource(houseFilingList.gcsUri).inputStream.use { inputStream ->
-            inputStream.bufferedReader().useLines { lines ->
-                lines.take(1).first().also { header ->
-                    check(header == expectedHeader) { "Invalid header: expected \"$expectedHeader\", got $header" }
-                }
-                lines.forEach { line ->
-                    runCatching {
-                        val row = parseRow(line, houseFilingList)
-                        val existingRow = houseFilingListRowRepository.findByDocId(row.docId)
-                        if (existingRow == null) houseFilingListRowRepository.save(row)
-                    }.onFailure {
-                        println("Failed to parse row: $line")
-                        // TODO save the failure to the database
-                    }
-                }
+
+        // Download the ZIP file from GCS to a temporary file
+        val tempFile = Files.createTempFile("house-filing-list-", ".zip")
+        try {
+            storage.getResource(houseFilingList.gcsUri).inputStream.use { gcsInputStream ->
+                Files.copy(gcsInputStream, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
             }
+
+            // Open the ZIP file and find the TSV file inside (e.g., 2025FD.txt)
+            val expectedFileName = "${houseFilingList.year}FD.txt"
+            ZipInputStream(Files.newInputStream(tempFile)).use { zipStream ->
+                var entry = zipStream.nextEntry
+                while (entry != null) {
+                    if (entry.name == expectedFileName) {
+                        // Parse the TSV file from the ZIP entry
+                        zipStream.bufferedReader().useLines { lines ->
+                            val linesList = lines.toList()
+                            linesList.first().also { header ->
+                                check(header == expectedHeader) { "Invalid header: expected \"$expectedHeader\", got $header" }
+                            }
+                            linesList.drop(1).forEach { line ->
+                                runCatching {
+                                    val row = parseRow(line, houseFilingList)
+                                    val existingRow = houseFilingListRowRepository.findByDocId(row.docId)
+                                    if (existingRow == null) houseFilingListRowRepository.save(row)
+                                }.onFailure {
+                                    println("Failed to parse row: $line")
+                                    // TODO save the failure to the database
+                                }
+                            }
+                        }
+                        break
+                    }
+                    entry = zipStream.nextEntry
+                }
+                check(entry != null) { "Could not find $expectedFileName in ZIP archive" }
+            }
+        } finally {
+            Files.deleteIfExists(tempFile)
         }
+
         return houseFilingListRepository.save(houseFilingList.copy(parsed = true, parsedAt = clock.instant()))
     }
 
