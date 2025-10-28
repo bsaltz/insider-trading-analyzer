@@ -211,7 +211,7 @@ class HouseCommands(
         @Option(
             longNames = ["--year"],
             shortNames = ['y'],
-            description = "The year to refresh etags for (default is the current year)",
+            description = "The year to show statistics for (default is the current year)",
             required = false,
         )
         year: Int?,
@@ -219,7 +219,7 @@ class HouseCommands(
         val year = year ?: clock.instant().atZone(clock.zone).year
         require(year >= 2008) { "Year must be 2008 or later" }
         require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
-        println("Stats for year $year")
-        TODO()
+        val stats = housePtrService.getStats(year)
+        println(stats.format())
     }
 }
