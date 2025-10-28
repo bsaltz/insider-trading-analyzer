@@ -26,7 +26,6 @@ class HousePtrService(
     private val ocrProcessorService: OcrProcessorService,
     private val houseLlmService: HouseLlmService,
     private val storage: Storage,
-    private val objectMapper: ObjectMapper,
     private val clock: Clock,
 ) {
     fun processFilingListRow(
