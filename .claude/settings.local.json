@@ -3,12 +3,13 @@
     "allow": [
       "Bash(./gradlew test:*)",
       "Bash(./gradlew build)",
-      "Bash(./gradlew ktlint*)",
+      "Bash(./gradlew ktlint:*)",
       "WebSearch",
       "WebFetch(domain:mvnrepository.com)",
       "WebFetch(domain:stackoverflow.com)",
       "Bash(./gradlew compileKotlin:*)",
-      "Bash(./gradlew ktlintFormat:*)"
+      "Bash(./gradlew ktlintFormat:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
