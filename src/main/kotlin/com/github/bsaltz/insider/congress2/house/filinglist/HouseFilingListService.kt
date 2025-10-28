@@ -33,6 +33,8 @@ class HouseFilingListService(
     fun getHouseFilingListRows(houseFilingListId: Long): List<HouseFilingListRow> =
         houseFilingListRowRepository.findByHouseFilingListId(houseFilingListId)
 
+    fun getHouseFilingListRows(year: Int): List<HouseFilingListRow> = houseFilingListRowRepository.findByYear(year)
+
     /**
      * Process a given year and return the resulting HouseFilingList.
      *

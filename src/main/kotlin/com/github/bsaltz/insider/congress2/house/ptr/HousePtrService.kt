@@ -178,4 +178,55 @@ class HousePtrService(
             // Empty for now
             additionalData = JsonNodeFactory.instance.objectNode(),
         )
+
+    /**
+     * Get processing statistics for a specific year.
+     *
+     * @param year The year to get statistics for
+     * @return Statistics about processing progress and results
+     */
+    fun getStats(year: Int): HousePtrStats {
+        // Get all filing list rows for the year
+        val allFilingListRows = houseFilingListService.getHouseFilingListRows(year)
+        val typePFilingListRows = allFilingListRows.filter { it.filingType == "P" }
+
+        // Count downloads for this year's filings
+        val downloadsCompleted =
+            typePFilingListRows.count { row ->
+                housePtrDownloadRepository.findByDocId(row.docId) != null
+            }
+
+        // Count OCR results for this year's filings
+        val ocrResultsCompleted =
+            typePFilingListRows.count { row ->
+                housePtrOcrResultRepository.findByDocId(row.docId) != null
+            }
+
+        // Count parsed filings for this year's filings
+        val filingsCompleted =
+            typePFilingListRows.count { row ->
+                housePtrFilingRepository.findByDocId(row.docId) != null
+            }
+
+        // Count total transactions extracted
+        val transactionsExtracted =
+            typePFilingListRows.sumOf { row ->
+                val filing = housePtrFilingRepository.findByDocId(row.docId)
+                if (filing != null) {
+                    housePtrTransactionRepository.findByHousePtrFilingId(filing.id!!).size
+                } else {
+                    0
+                }
+            }
+
+        return HousePtrStats(
+            year = year,
+            totalFilingListRows = allFilingListRows.size,
+            typePFilingListRows = typePFilingListRows.size,
+            downloadsCompleted = downloadsCompleted,
+            ocrResultsCompleted = ocrResultsCompleted,
+            filingsCompleted = filingsCompleted,
+            transactionsExtracted = transactionsExtracted,
+        )
+    }
 }
