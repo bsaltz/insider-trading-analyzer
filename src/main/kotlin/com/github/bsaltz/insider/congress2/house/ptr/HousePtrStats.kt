@@ -33,9 +33,24 @@ data class HousePtrStats(
             appendLine("  Type 'P' rows (processable):   $typePFilingListRows")
             appendLine()
             appendLine("Processing Progress:")
-            appendLine("  PDFs downloaded:               $downloadsCompleted / $typePFilingListRows (${percentage(downloadsCompleted, typePFilingListRows)})")
-            appendLine("  OCR results completed:         $ocrResultsCompleted / $downloadsCompleted (${percentage(ocrResultsCompleted, downloadsCompleted)})")
-            appendLine("  Filings parsed:                $filingsCompleted / $ocrResultsCompleted (${percentage(filingsCompleted, ocrResultsCompleted)})")
+            appendLine(
+                "  PDFs downloaded:               $downloadsCompleted / $typePFilingListRows (${percentage(
+                    downloadsCompleted,
+                    typePFilingListRows,
+                )})",
+            )
+            appendLine(
+                "  OCR results completed:         $ocrResultsCompleted / $downloadsCompleted (${percentage(
+                    ocrResultsCompleted,
+                    downloadsCompleted,
+                )})",
+            )
+            appendLine(
+                "  Filings parsed:                $filingsCompleted / $ocrResultsCompleted (${percentage(
+                    filingsCompleted,
+                    ocrResultsCompleted,
+                )})",
+            )
             appendLine()
             appendLine("Results:")
             appendLine("  Transactions extracted:        $transactionsExtracted")
@@ -45,7 +60,12 @@ data class HousePtrStats(
             }
             appendLine()
             appendLine("Overall Progress:")
-            appendLine("  End-to-end completion:         $filingsCompleted / $typePFilingListRows (${percentage(filingsCompleted, typePFilingListRows)})")
+            appendLine(
+                "  End-to-end completion:         $filingsCompleted / $typePFilingListRows (${percentage(
+                    filingsCompleted,
+                    typePFilingListRows,
+                )})",
+            )
         }
 
     private fun percentage(

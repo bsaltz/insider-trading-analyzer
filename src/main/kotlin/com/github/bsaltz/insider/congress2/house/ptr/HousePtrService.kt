@@ -1,6 +1,5 @@
 package com.github.bsaltz.insider.congress2.house.ptr
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.github.bsaltz.insider.congress2.house.client.HouseHttpClient
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListRow
@@ -26,7 +25,6 @@ class HousePtrService(
     private val ocrProcessorService: OcrProcessorService,
     private val houseLlmService: HouseLlmService,
     private val storage: Storage,
-    private val objectMapper: ObjectMapper,
     private val clock: Clock,
 ) {
     fun processFilingListRow(

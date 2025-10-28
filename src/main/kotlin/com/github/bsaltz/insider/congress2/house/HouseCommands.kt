@@ -62,7 +62,9 @@ class HouseCommands(
 ) {
     @Command(
         command = ["process-all"],
-        description = "End-to-end processing for all years (or specified years). Downloads TSV data, fetches PDFs, runs OCR, and parses transactions.",
+        description =
+            "End-to-end processing for all years (or specified years). " +
+                "Downloads TSV data, fetches PDFs, runs OCR, and parses transactions.",
     )
     fun processAll(
         @Option(
@@ -84,7 +86,9 @@ class HouseCommands(
 
     @Command(
         command = ["process-year"],
-        description = "Batch processing for a specific year. Downloads TSV data, fetches all PDFs for the year, runs OCR, and parses transactions.",
+        description =
+            "Batch processing for a specific year. " +
+                "Downloads TSV data, fetches all PDFs for the year, runs OCR, and parses transactions.",
     )
     fun processYear(year: Int) {
         require(year >= 2008) { "Year must be 2008 or later" }
@@ -111,7 +115,9 @@ class HouseCommands(
 
     @Command(
         command = ["process-filing"],
-        description = "Single filing processing from start to finish. Downloads PDF, runs OCR, and parses transactions for the specified document ID.",
+        description =
+            "Single filing processing from start to finish. " +
+                "Downloads PDF, runs OCR, and parses transactions for the specified document ID.",
     )
     fun processFiling(docId: String) {
         require(docId.isNotBlank()) { "Document ID cannot be blank" }

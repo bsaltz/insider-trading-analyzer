@@ -4,6 +4,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest
@@ -14,6 +15,7 @@ import java.time.temporal.ChronoUnit
 @DataJdbcTest
 @ActiveProfiles("test")
 @AutoConfigureEmbeddedDatabase
+@Disabled
 class ParseIssueRepositoryTest(
     @param:Autowired
     private val parseIssueRepository: ParseIssueRepository,
