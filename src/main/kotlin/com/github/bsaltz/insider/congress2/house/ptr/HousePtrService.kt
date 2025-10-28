@@ -146,7 +146,16 @@ class HousePtrService(
         ocrResult: HousePtrOcrResult,
         response: String,
     ): HousePtrFiling {
-        // TODO: Delete (or maybe update?) the old records if they exist
+        // Delete old records if they exist to avoid duplicates
+        val existingFilings = housePtrFilingRepository.findByDocId(ocrResult.docId)
+        existingFilings.forEach { existingFiling ->
+            // Delete old transactions first (cascade should handle this, but being explicit)
+            housePtrTransactionRepository.findByHousePtrFilingId(existingFiling.id!!).forEach {
+                housePtrTransactionRepository.delete(it)
+            }
+            housePtrFilingRepository.delete(existingFiling)
+        }
+
         val housePtrFiling =
             housePtrFilingRepository.save(
                 HousePtrFiling(
@@ -203,17 +212,15 @@ class HousePtrService(
         // Count parsed filings for this year's filings
         val filingsCompleted =
             typePFilingListRows.count { row ->
-                housePtrFilingRepository.findByDocId(row.docId) != null
+                housePtrFilingRepository.findByDocId(row.docId).isNotEmpty()
             }
 
         // Count total transactions extracted
         val transactionsExtracted =
             typePFilingListRows.sumOf { row ->
-                val filing = housePtrFilingRepository.findByDocId(row.docId)
-                if (filing != null) {
+                val filings = housePtrFilingRepository.findByDocId(row.docId)
+                filings.sumOf { filing ->
                     housePtrTransactionRepository.findByHousePtrFilingId(filing.id!!).size
-                } else {
-                    0
                 }
             }
 
