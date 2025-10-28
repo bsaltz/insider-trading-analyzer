@@ -92,7 +92,9 @@ class HouseCommands(
         println("Processing data for year $year")
         val filingList = houseFilingListService.processYear(year)
         val filingListId = filingList.id ?: error("Filing list ID is null")
-        val filingListRows = houseFilingListService.getHouseFilingListRows(filingListId)
+        val allFilingListRows = houseFilingListService.getHouseFilingListRows(filingListId)
+        val filingListRows = allFilingListRows.filter { it.filingType == "P" }
+        println("Found ${allFilingListRows.size} total filing rows, processing ${filingListRows.size} with filing type 'P'")
         var successCount = 0
         var failureCount = 0
         filingListRows.forEach { row ->
