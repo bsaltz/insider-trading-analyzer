@@ -1,7 +1,6 @@
 package com.github.bsaltz.insider.congress.house.model
 
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase
-import org.junit.Ignore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue

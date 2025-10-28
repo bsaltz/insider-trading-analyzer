@@ -1,6 +1,5 @@
 package com.github.bsaltz.insider.congress2.house.ptr
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.github.bsaltz.insider.congress2.house.client.HouseHttpClient
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListRow
