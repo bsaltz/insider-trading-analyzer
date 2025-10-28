@@ -93,8 +93,18 @@ class HouseCommands(
         val filingList = houseFilingListService.processYear(year)
         val filingListId = filingList.id ?: error("Filing list ID is null")
         val filingListRows = houseFilingListService.getHouseFilingListRows(filingListId)
-        filingListRows.forEach { housePtrService.processFilingListRow(it) }
-        println("Processing completed for year $year")
+        var successCount = 0
+        var failureCount = 0
+        filingListRows.forEach { row ->
+            val result = housePtrService.processFilingListRow(row)
+            if (result != null) {
+                successCount++
+            } else {
+                failureCount++
+                println("Skipped filing ${row.docId} due to download failure")
+            }
+        }
+        println("Processing completed for year $year: $successCount succeeded, $failureCount failed")
     }
 
     @Command(
@@ -104,8 +114,12 @@ class HouseCommands(
     fun processFiling(docId: String) {
         require(docId.isNotBlank()) { "Document ID cannot be blank" }
         println("Processing filing $docId")
-        housePtrService.processFilingListRow(docId, true)
-        println("Processing of filing $docId completed")
+        val result = housePtrService.processFilingListRow(docId, true)
+        if (result != null) {
+            println("Processing of filing $docId completed successfully")
+        } else {
+            println("Processing of filing $docId failed - possibly an FDR file or download error")
+        }
     }
 
     @Command(
@@ -127,8 +141,12 @@ class HouseCommands(
     fun downloadPdf(docId: String) {
         require(docId.isNotBlank()) { "Document ID cannot be blank" }
         println("Downloading PDF for filing $docId")
-        housePtrService.downloadPdf(docId, true)
-        println("PDF download and parsing completed for filing $docId")
+        val result = housePtrService.downloadPdf(docId, true)
+        if (result != null) {
+            println("PDF download completed for filing $docId")
+        } else {
+            println("PDF download failed for filing $docId - possibly an FDR file or download error")
+        }
     }
 
     @Command(

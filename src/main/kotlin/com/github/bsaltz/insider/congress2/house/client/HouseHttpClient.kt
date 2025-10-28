@@ -19,13 +19,16 @@ class HouseHttpClient(
         RestClient
             .builder()
             .defaultHeader(HttpHeaders.USER_AGENT, USER_AGENT)
+            .defaultHeader(HttpHeaders.ACCEPT, "*/*")
+            .defaultHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate")
+            .defaultHeader(HttpHeaders.CONNECTION, "keep-alive")
             .build()
 
     fun fetchFilingList(
         year: Int,
         gcsUri: String,
     ): StoredResponse {
-        val entity = filingListGetEntity(year)
+        val entity = filingListGetEntity(year) ?: error("Failed to fetch filing list for year $year")
         val location = storeResponse(gcsUri, entity)
         return StoredResponse(
             googleStorageLocation = location,
@@ -33,14 +36,14 @@ class HouseHttpClient(
         )
     }
 
-    fun getFilingListEtag(year: Int): String? = filingListHeadHeaders(year)[HttpHeaders.ETAG]?.firstOrNull()
+    fun getFilingListEtag(year: Int): String? = filingListHeadHeaders(year)?.get(HttpHeaders.ETAG)?.firstOrNull()
 
     fun fetchPtr(
         docId: String,
         year: Int,
         gcsUri: String,
-    ): StoredResponse {
-        val entity = ptrGetEntity(docId, year)
+    ): StoredResponse? {
+        val entity = ptrGetEntity(docId, year) ?: return null
         val location = storeResponse(gcsUri, entity)
         val etag =
             entity.headers[HttpHeaders.ETAG]?.firstOrNull()
@@ -51,24 +54,44 @@ class HouseHttpClient(
     fun getPtrEtag(
         docId: String,
         year: Int,
-    ): String? = ptrHeadHeaders(docId, year)[HttpHeaders.ETAG]?.firstOrNull()
+    ): String? = ptrHeadHeaders(docId, year)?.get(HttpHeaders.ETAG)?.firstOrNull()
 
     private fun filingListUrl(year: Int): String = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/${year}FD.zip"
 
-    private fun filingListGetEntity(year: Int): ResponseEntity<Resource> =
-        restClient
-            .get()
-            .uri(filingListUrl(year))
-            .retrieve()
-            .toEntity(Resource::class.java)
+    private fun filingListGetEntity(year: Int): ResponseEntity<Resource>? =
+        runCatching {
+            restClient
+                .get()
+                .uri(filingListUrl(year))
+                .retrieve()
+                .toEntity(Resource::class.java)
+        }.onFailure { exception ->
+            when (exception) {
+                is org.springframework.web.client.RestClientResponseException -> {
+                    println("HTTP error fetching filing list for year $year: ${exception.statusCode} ${exception.statusText}")
+                    println("Response body: ${exception.responseBodyAsString}")
+                }
+                else -> println("Error fetching filing list for year $year: ${exception.message}")
+            }
+        }.getOrNull()
 
-    private fun filingListHeadHeaders(year: Int): HttpHeaders =
-        restClient
-            .head()
-            .uri(filingListUrl(year))
-            .retrieve()
-            .toBodilessEntity()
-            .headers
+    private fun filingListHeadHeaders(year: Int): HttpHeaders? =
+        runCatching {
+            restClient
+                .head()
+                .uri(filingListUrl(year))
+                .retrieve()
+                .toBodilessEntity()
+                .headers
+        }.onFailure { exception ->
+            when (exception) {
+                is org.springframework.web.client.RestClientResponseException -> {
+                    println("HTTP error HEAD filing list for year $year: ${exception.statusCode} ${exception.statusText}")
+                    println("Response body: ${exception.responseBodyAsString}")
+                }
+                else -> println("Error HEAD filing list for year $year: ${exception.message}")
+            }
+        }.getOrNull()
 
     private fun ptrDocUrl(
         docId: String,
@@ -78,23 +101,43 @@ class HouseHttpClient(
     private fun ptrGetEntity(
         docId: String,
         year: Int,
-    ): ResponseEntity<Resource> =
-        restClient
-            .get()
-            .uri(ptrDocUrl(docId, year))
-            .retrieve()
-            .toEntity(Resource::class.java)
+    ): ResponseEntity<Resource>? =
+        runCatching {
+            restClient
+                .get()
+                .uri(ptrDocUrl(docId, year))
+                .retrieve()
+                .toEntity(Resource::class.java)
+        }.onFailure { exception ->
+            when (exception) {
+                is org.springframework.web.client.RestClientResponseException -> {
+                    println("HTTP error fetching PTR $docId for year $year: ${exception.statusCode} ${exception.statusText}")
+                    println("Response body: ${exception.responseBodyAsString}")
+                }
+                else -> println("Error fetching PTR $docId for year $year: ${exception.message}")
+            }
+        }.getOrNull()
 
     private fun ptrHeadHeaders(
         docId: String,
         year: Int,
-    ): HttpHeaders =
-        restClient
-            .head()
-            .uri(ptrDocUrl(docId, year))
-            .retrieve()
-            .toBodilessEntity()
-            .headers
+    ): HttpHeaders? =
+        runCatching {
+            restClient
+                .head()
+                .uri(ptrDocUrl(docId, year))
+                .retrieve()
+                .toBodilessEntity()
+                .headers
+        }.onFailure { exception ->
+            when (exception) {
+                is org.springframework.web.client.RestClientResponseException -> {
+                    println("HTTP error HEAD PTR $docId for year $year: ${exception.statusCode} ${exception.statusText}")
+                    println("Response body: ${exception.responseBodyAsString}")
+                }
+                else -> println("Error HEAD PTR $docId for year $year: ${exception.message}")
+            }
+        }.getOrNull()
 
     private fun storeResponse(
         gcsUri: String,

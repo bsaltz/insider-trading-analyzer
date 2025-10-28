@@ -32,21 +32,22 @@ class HousePtrService(
     fun processFilingListRow(
         docId: String,
         force: Boolean = false,
-    ): HousePtrFiling =
+    ): HousePtrFiling? =
         processFilingListRow(houseFilingListService.getHouseFilingListRow(docId) ?: error("No row for docId: $docId"), force)
 
     fun processFilingListRow(
         houseFilingListRow: HouseFilingListRow,
         force: Boolean = false,
-    ): HousePtrFiling =
-        downloadPdf(houseFilingListRow.docId, houseFilingListRow.year, force)
-            .let { download -> runOcr(houseFilingListRow.year, download, force) }
-            .let { ocrResult -> parseFiling(ocrResult, force) }
+    ): HousePtrFiling? {
+        val download = downloadPdf(houseFilingListRow.docId, houseFilingListRow.year, force) ?: return null
+        val ocrResult = runOcr(houseFilingListRow.year, download, force)
+        return parseFiling(ocrResult, force)
+    }
 
     fun downloadPdf(
         docId: String,
         force: Boolean = false,
-    ): HousePtrDownload {
+    ): HousePtrDownload? {
         val houseFilingListRow =
             houseFilingListService.getHouseFilingListRow(docId)
                 ?: error("No row for docId: $docId")
@@ -57,12 +58,16 @@ class HousePtrService(
         docId: String,
         year: Int,
         force: Boolean = false,
-    ): HousePtrDownload {
+    ): HousePtrDownload? {
         val existingDownload = housePtrDownloadRepository.findByDocId(docId)
         val etag = houseHttpClient.getPtrEtag(docId, year)
         if (existingDownload != null && !force && existingDownload.etag == etag) return existingDownload
         val gcsUri = getDocGcsUri(docId, year)
         val response = houseHttpClient.fetchPtr(docId, year, gcsUri)
+        if (response == null) {
+            println("Failed to fetch PTR document $docId for year $year - possibly an FDR file at different URL")
+            return null
+        }
         val download =
             existingDownload?.copy(etag = response.etag) ?: HousePtrDownload(
                 docId = docId,

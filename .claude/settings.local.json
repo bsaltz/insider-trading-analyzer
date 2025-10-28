@@ -6,7 +6,9 @@
       "Bash(./gradlew ktlint*)",
       "WebSearch",
       "WebFetch(domain:mvnrepository.com)",
-      "WebFetch(domain:stackoverflow.com)"
+      "WebFetch(domain:stackoverflow.com)",
+      "Bash(./gradlew compileKotlin:*)",
+      "Bash(./gradlew ktlintFormat:*)"
     ],
     "deny": [],
     "ask": []
