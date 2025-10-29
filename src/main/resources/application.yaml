@@ -11,6 +11,21 @@ spring:
     username: insider_user
     password: insider_pass
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Connection validation
+      connection-test-query: SELECT 1
+      validation-timeout: 3000
+      # Pool sizing
+      maximum-pool-size: 10
+      minimum-idle: 5
+      # Connection lifecycle
+      max-lifetime: 1800000  # 30 minutes - prevent stale connections
+      idle-timeout: 600000    # 10 minutes - remove idle connections
+      connection-timeout: 30000  # 30 seconds - wait time for connection from pool
+      # Leak detection (helpful for debugging)
+      leak-detection-threshold: 60000  # 1 minute - warn if connection held too long
+      # Pool name for logging
+      pool-name: InsiderTradingHikariPool
   flyway:
     enabled: true
     baseline-on-migrate: true
