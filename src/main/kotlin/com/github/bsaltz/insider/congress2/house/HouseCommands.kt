@@ -1,14 +1,14 @@
 package com.github.bsaltz.insider.congress2.house
 
+import com.github.bsaltz.insider.congress2.house.HouseValidation.validateDocId
+import com.github.bsaltz.insider.congress2.house.HouseValidation.validateYear
+import com.github.bsaltz.insider.congress2.house.HouseValidation.validateYears
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListService
 import com.github.bsaltz.insider.congress2.house.ptr.HousePtrService
 import org.springframework.shell.command.CommandRegistration
 import org.springframework.shell.command.annotation.Command
 import org.springframework.shell.command.annotation.Option
 import java.time.Clock
-import com.github.bsaltz.insider.congress2.house.HouseValidation.validateYear
-import com.github.bsaltz.insider.congress2.house.HouseValidation.validateYears
-import com.github.bsaltz.insider.congress2.house.HouseValidation.validateDocId
 
 /**
  * Commands for processing Congress House filings.

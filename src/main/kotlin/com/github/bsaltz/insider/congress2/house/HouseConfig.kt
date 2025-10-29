@@ -49,8 +49,7 @@ object HouseConfig {
      * @param year The disclosure year
      * @return The complete URL to the filing list ZIP file
      */
-    fun filingListUrl(year: Int): String =
-        "$DISCLOSURE_BASE_URL$FILING_LIST_PATH/$year$FILING_TYPE_FORMAT.$FILE_EXTENSION_ZIP"
+    fun filingListUrl(year: Int): String = "$DISCLOSURE_BASE_URL$FILING_LIST_PATH/$year$FILING_TYPE_FORMAT.$FILE_EXTENSION_ZIP"
 
     /**
      * Constructs the URL for downloading a PTR document PDF.
@@ -103,6 +102,5 @@ object HouseConfig {
      * @param year The disclosure year
      * @return The expected filename (e.g., "2024FD.txt")
      */
-    fun expectedFilingFileName(year: Int): String =
-        "$year$FILING_TYPE_FORMAT.$FILE_EXTENSION_TXT"
+    fun expectedFilingFileName(year: Int): String = "$year$FILING_TYPE_FORMAT.$FILE_EXTENSION_TXT"
 }
