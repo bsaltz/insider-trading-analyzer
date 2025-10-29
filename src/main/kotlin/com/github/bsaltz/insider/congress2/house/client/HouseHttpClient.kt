@@ -1,5 +1,6 @@
 package com.github.bsaltz.insider.congress2.house.client
 
+import com.github.bsaltz.insider.congress2.house.HouseConfig
 import com.google.cloud.spring.storage.GoogleStorageLocation
 import com.google.cloud.spring.storage.GoogleStorageResource
 import com.google.cloud.storage.Storage
@@ -56,7 +57,7 @@ class HouseHttpClient(
         year: Int,
     ): String? = ptrHeadHeaders(docId, year)?.get(HttpHeaders.ETAG)?.firstOrNull()
 
-    private fun filingListUrl(year: Int): String = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/${year}FD.zip"
+    private fun filingListUrl(year: Int): String = HouseConfig.filingListUrl(year)
 
     private fun filingListGetEntity(year: Int): ResponseEntity<Resource>? =
         runCatching {
@@ -96,7 +97,7 @@ class HouseHttpClient(
     private fun ptrDocUrl(
         docId: String,
         year: Int,
-    ): String = "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/$year/$docId.pdf"
+    ): String = HouseConfig.ptrDocUrl(docId, year)
 
     private fun ptrGetEntity(
         docId: String,
@@ -146,7 +147,7 @@ class HouseHttpClient(
         val resource = GoogleStorageResource(storage, gcsUri)
         responseEntity.body?.inputStream?.use { response ->
             resource.writableChannel().use { channel ->
-                val buffer = ByteArray(10240)
+                val buffer = ByteArray(HouseConfig.BUFFER_SIZE)
                 while (true) {
                     val bytesRead = response.read(buffer)
                     if (bytesRead == -1) break

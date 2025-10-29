@@ -1,6 +1,7 @@
 package com.github.bsaltz.insider.congress2.house.ptr
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.github.bsaltz.insider.congress2.house.HouseConfig
 import com.github.bsaltz.insider.congress2.house.client.HouseHttpClient
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListRow
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListService
@@ -110,7 +111,7 @@ class HousePtrService(
     private fun getDocGcsUri(
         docId: String,
         year: Int,
-    ): String = "gs://insider-trading-analyzer/congress/house/$year/$docId.pdf"
+    ): String = HouseConfig.ptrPdfGcsUri(year, docId)
 
     fun runOcr(
         docId: String,
@@ -151,7 +152,7 @@ class HousePtrService(
     private fun getOcrGcsUri(
         docId: String,
         year: Int,
-    ): String = "gs://insider-trading-analyzer/congress/house/$year/$docId.txt"
+    ): String = HouseConfig.ptrOcrGcsUri(year, docId)
 
     fun parseFiling(
         docId: String,
