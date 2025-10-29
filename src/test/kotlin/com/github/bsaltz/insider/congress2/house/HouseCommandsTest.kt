@@ -160,6 +160,36 @@ class HouseCommandsTest {
     }
 
     @Test
+    fun `processYear should process filings in descending order by filing date`() {
+        // Given
+        val year = 2025
+        val filingList = createFilingList(year, 1L)
+        val oldFiling = createFilingListRow("doc1", year, "P", LocalDate.of(year, 1, 15))
+        val recentFiling = createFilingListRow("doc2", year, "P", LocalDate.of(year, 3, 10))
+        val midFiling = createFilingListRow("doc3", year, "P", LocalDate.of(year, 2, 20))
+        val filingListRows = listOf(oldFiling, recentFiling, midFiling) // Unsorted order
+
+        whenever(houseFilingListService.processYear(year)).thenReturn(filingList)
+        whenever(houseFilingListService.getHouseFilingListRows(1L)).thenReturn(filingListRows)
+        whenever(housePtrService.processFilingListRow(any<HouseFilingListRow>(), eq(false)))
+            .thenReturn(createFiling("doc", 1L))
+
+        // Capture the order of processing
+        val processingOrder = mutableListOf<String>()
+        whenever(housePtrService.processFilingListRow(any<HouseFilingListRow>(), eq(false))).thenAnswer { invocation ->
+            val row = invocation.getArgument<HouseFilingListRow>(0)
+            processingOrder.add(row.docId)
+            createFiling(row.docId, 1L)
+        }
+
+        // When
+        houseCommands.processYear(year)
+
+        // Then - Should process in descending order by filing date (most recent first)
+        assertEquals(listOf("doc2", "doc3", "doc1"), processingOrder)
+    }
+
+    @Test
     fun `processYear should reject years before 2008`() {
         // When & Then
         val exception =
@@ -587,6 +617,7 @@ class HouseCommandsTest {
         docId: String,
         year: Int,
         filingType: String,
+        filingDate: LocalDate = LocalDate.of(year, 1, 1),
     ) = HouseFilingListRow(
         id = 1L,
         docId = docId,
@@ -597,7 +628,7 @@ class HouseCommandsTest {
         filingType = filingType,
         stateDst = "CA-01",
         year = year,
-        filingDate = LocalDate.of(year, 1, 1),
+        filingDate = filingDate,
         downloaded = false,
         downloadedAt = null,
         rawRowData = "raw",
