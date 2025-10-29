@@ -4,7 +4,6 @@ import com.github.bsaltz.insider.test.RepositoryTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -124,16 +123,17 @@ class HousePtrFilingRepositoryTest(
         housePtrFilingRepository.save(filing)
 
         // When
-        val foundFiling = housePtrFilingRepository.findByDocId("20250201-001")
-        val notFoundFiling = housePtrFilingRepository.findByDocId("nonexistent-doc-id")
+        val foundFilings = housePtrFilingRepository.findByDocId("20250201-001")
+        val notFoundFilings = housePtrFilingRepository.findByDocId("nonexistent-doc-id")
 
         // Then
-        assertNotNull(foundFiling)
-        assertEquals("20250201-001", foundFiling!!.docId)
+        assertEquals(1, foundFilings.size)
+        val foundFiling = foundFilings.first()
+        assertEquals("20250201-001", foundFiling.docId)
         assertEquals(ocrResultId, foundFiling.housePtrOcrResultId)
         assertTrue(foundFiling.rawLlmResponse.contains("MSFT"))
 
-        assertNull(notFoundFiling)
+        assertTrue(notFoundFilings.isEmpty())
     }
 
     @Test
@@ -187,7 +187,7 @@ class HousePtrFilingRepositoryTest(
 
         // Then
         assertFalse(housePtrFilingRepository.existsById(filingId))
-        assertNull(housePtrFilingRepository.findByDocId("20250401-001"))
+        assertTrue(housePtrFilingRepository.findByDocId("20250401-001").isEmpty())
     }
 
     @Test

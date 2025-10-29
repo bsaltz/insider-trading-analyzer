@@ -308,7 +308,7 @@ class HousePtrServiceTest {
         whenever(housePtrOcrResultRepository.findByDocId(docId1)).thenReturn(ocrResult1)
 
         val filing1 = createFiling(docId1, 1L, 1L)
-        whenever(housePtrFilingRepository.findByDocId(docId1)).thenReturn(filing1)
+        whenever(housePtrFilingRepository.findByDocId(docId1)).thenReturn(listOf(filing1))
 
         val transactions1 = listOf(createTransaction(docId1, 1L, 1L), createTransaction(docId1, 1L, 2L))
         whenever(housePtrTransactionRepository.findByHousePtrFilingId(1L)).thenReturn(transactions1)
@@ -317,12 +317,12 @@ class HousePtrServiceTest {
         val download2 = createDownload(docId2, year, 2L)
         whenever(housePtrDownloadRepository.findByDocId(docId2)).thenReturn(download2)
         whenever(housePtrOcrResultRepository.findByDocId(docId2)).thenReturn(null)
-        whenever(housePtrFilingRepository.findByDocId(docId2)).thenReturn(null)
+        whenever(housePtrFilingRepository.findByDocId(docId2)).thenReturn(emptyList())
 
         // Doc 3: filing type "A", should not be counted in type P stats
         whenever(housePtrDownloadRepository.findByDocId(docId3)).thenReturn(null)
         whenever(housePtrOcrResultRepository.findByDocId(docId3)).thenReturn(null)
-        whenever(housePtrFilingRepository.findByDocId(docId3)).thenReturn(null)
+        whenever(housePtrFilingRepository.findByDocId(docId3)).thenReturn(emptyList())
 
         // When
         val result = housePtrService.getStats(year)

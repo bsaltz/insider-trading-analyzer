@@ -9,7 +9,8 @@
       "WebFetch(domain:stackoverflow.com)",
       "Bash(./gradlew compileKotlin:*)",
       "Bash(./gradlew ktlintFormat:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(./gradlew check:*)"
     ],
     "deny": [],
     "ask": []
