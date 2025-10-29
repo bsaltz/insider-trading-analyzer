@@ -102,13 +102,21 @@ class HouseCommands(
         println("Found ${allFilingListRows.size} total filing rows, processing ${filingListRows.size} with filing type 'P'")
         var successCount = 0
         var failureCount = 0
-        filingListRows.forEach { row ->
-            val result = housePtrService.processFilingListRow(row)
-            if (result != null) {
-                successCount++
-            } else {
+        filingListRows.forEachIndexed { index, row ->
+            println("[${index + 1}/${filingListRows.size}] Processing filing ${row.docId}...")
+            try {
+                val result = housePtrService.processFilingListRow(row)
+                if (result != null) {
+                    successCount++
+                    println("[${index + 1}/${filingListRows.size}] ✓ Successfully processed filing ${row.docId}")
+                } else {
+                    failureCount++
+                    println("[${index + 1}/${filingListRows.size}] ✗ Skipped filing ${row.docId} due to download failure")
+                }
+            } catch (e: Exception) {
                 failureCount++
-                println("Skipped filing ${row.docId} due to download failure")
+                println("[${index + 1}/${filingListRows.size}] ✗ Error processing filing ${row.docId}: ${e.message}")
+                e.printStackTrace()
             }
         }
         println("Processing completed for year $year: $successCount succeeded, $failureCount failed")

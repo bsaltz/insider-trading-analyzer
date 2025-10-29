@@ -37,9 +37,23 @@ class HousePtrService(
         houseFilingListRow: HouseFilingListRow,
         force: Boolean = false,
     ): HousePtrFiling? {
-        val download = downloadPdf(houseFilingListRow.docId, houseFilingListRow.year, force) ?: return null
+        println("  → Step 1/3: Downloading PDF for ${houseFilingListRow.docId}...")
+        val download = downloadPdf(houseFilingListRow.docId, houseFilingListRow.year, force)
+        if (download == null) {
+            println("  ✗ Download failed for ${houseFilingListRow.docId}")
+            return null
+        }
+        println("  ✓ PDF downloaded for ${houseFilingListRow.docId}")
+
+        println("  → Step 2/3: Running OCR on ${houseFilingListRow.docId}...")
         val ocrResult = runOcr(houseFilingListRow.year, download, force)
-        return parseFiling(ocrResult, force)
+        println("  ✓ OCR completed for ${houseFilingListRow.docId}")
+
+        println("  → Step 3/3: Parsing filing ${houseFilingListRow.docId}...")
+        val result = parseFiling(ocrResult, force)
+        println("  ✓ Parsing completed for ${houseFilingListRow.docId}")
+
+        return result
     }
 
     fun downloadPdf(
@@ -59,13 +73,18 @@ class HousePtrService(
     ): HousePtrDownload? {
         val existingDownload = housePtrDownloadRepository.findByDocId(docId)
         val etag = houseHttpClient.getPtrEtag(docId, year)
-        if (existingDownload != null && !force && existingDownload.etag == etag) return existingDownload
+        if (existingDownload != null && !force && existingDownload.etag == etag) {
+            println("    → Using cached PDF for $docId (etag matches)")
+            return existingDownload
+        }
+        println("    → Fetching PDF from remote for $docId...")
         val gcsUri = getDocGcsUri(docId, year)
         val response = houseHttpClient.fetchPtr(docId, year, gcsUri)
         if (response == null) {
-            println("Failed to fetch PTR document $docId for year $year - possibly an FDR file at different URL")
+            println("    ✗ Failed to fetch PTR document $docId for year $year - possibly an FDR file at different URL")
             return null
         }
+        println("    ✓ Successfully fetched PDF for $docId")
         val download =
             existingDownload?.copy(etag = response.etag) ?: HousePtrDownload(
                 docId = docId,
@@ -102,8 +121,13 @@ class HousePtrService(
     ): HousePtrOcrResult {
         val housePtrDownloadId = housePtrDownload.id ?: error("No id for housePtrDownload")
         val existingOcrResult = housePtrOcrResultRepository.findByHousePtrDownloadId(housePtrDownloadId)
-        if (existingOcrResult != null && !force) return existingOcrResult
+        if (existingOcrResult != null && !force) {
+            println("    → Using cached OCR result for ${housePtrDownload.docId}")
+            return existingOcrResult
+        }
+        println("    → Running OCR on PDF for ${housePtrDownload.docId}...")
         val result = ocrProcessorService.parsePdf(GoogleStorageLocation(housePtrDownload.gcsUri)).response
+        println("    ✓ OCR completed, saving result to GCS...")
         val gcsUri = getOcrGcsUri(housePtrDownload.docId, year)
         storage.getResource(gcsUri).outputStream.use { it.write(result.toByteArray()) }
         val housePtrOcrResult =
@@ -134,11 +158,14 @@ class HousePtrService(
         ocrResult: HousePtrOcrResult,
         force: Boolean = false,
     ): HousePtrFiling {
+        println("    → Loading OCR text from GCS for ${ocrResult.docId}...")
         val ocrResultText =
             storage.getResource(ocrResult.gcsUri).inputStream.use {
                 it.readBytes().toString(Charsets.UTF_8)
             }
+        println("    → Running LLM parsing on ${ocrResult.docId}...")
         val (output, rawLlmResponse) = houseLlmService.process(ocrResultText)
+        println("    ✓ LLM parsing completed for ${ocrResult.docId}, saving ${output.transactions.size} transactions...")
         return output.saveHouseLlmOutput(ocrResult, rawLlmResponse)
     }
 
