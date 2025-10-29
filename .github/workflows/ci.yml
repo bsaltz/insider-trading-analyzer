@@ -28,15 +28,8 @@ jobs:
           gradle-version: wrapper
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Build project
-        run: ./gradlew build -x test
-
-      - name: Run tests
-        run: ./gradlew test
-        continue-on-error: true
-
-      - name: Run ktlintCheck
-        run: ./gradlew ktlintCheck
+      - name: Run check
+        run: ./gradlew check
 
       - name: Upload test results
         if: always()
