@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
@@ -359,6 +360,85 @@ class HousePtrServiceTest {
         assertNull(result)
         verify(ocrProcessorService, never()).parsePdf(any())
         verify(houseLlmService, never()).process(any())
+    }
+
+    @Test
+    fun `getTransactionsForYear should return all transactions for type P filings`() {
+        // Given
+        val year = 2025
+        val docId1 = "20250101-001"
+        val docId2 = "20250102-002"
+        val docId3 = "20250103-003" // Type A filing, should be excluded
+
+        val filingListRow1 = createFilingListRow(docId1, year, "P")
+        val filingListRow2 = createFilingListRow(docId2, year, "P")
+        val filingListRow3 = createFilingListRow(docId3, year, "A")
+
+        whenever(houseFilingListService.getHouseFilingListRows(year)).thenReturn(
+            listOf(filingListRow1, filingListRow2, filingListRow3),
+        )
+
+        val filing1 = createFiling(docId1, 1L, 1L)
+        val filing2 = createFiling(docId2, 2L, 2L)
+
+        whenever(housePtrFilingRepository.findByDocId(docId1)).thenReturn(listOf(filing1))
+        whenever(housePtrFilingRepository.findByDocId(docId2)).thenReturn(listOf(filing2))
+        whenever(housePtrFilingRepository.findByDocId(docId3)).thenReturn(emptyList())
+
+        val transactions1 = listOf(createTransaction(docId1, 1L, 1L), createTransaction(docId1, 1L, 2L))
+        val transactions2 = listOf(createTransaction(docId2, 2L, 3L))
+
+        whenever(housePtrTransactionRepository.findByHousePtrFilingId(1L)).thenReturn(transactions1)
+        whenever(housePtrTransactionRepository.findByHousePtrFilingId(2L)).thenReturn(transactions2)
+
+        // When
+        val result = housePtrService.getTransactionsForYear(year)
+
+        // Then
+        assertEquals(3, result.size)
+        assertTrue(result.containsAll(transactions1 + transactions2))
+        verify(housePtrFilingRepository, never()).findByDocId(docId3) // Type A should be skipped
+    }
+
+    @Test
+    fun `getTransactionsForYear should return empty list when no filings exist`() {
+        // Given
+        val year = 2025
+        whenever(houseFilingListService.getHouseFilingListRows(year)).thenReturn(emptyList())
+
+        // When
+        val result = housePtrService.getTransactionsForYear(year)
+
+        // Then
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `getTransactionsForYear should handle multiple filings per docId`() {
+        // Given
+        val year = 2025
+        val docId = "20250101-001"
+
+        val filingListRow = createFilingListRow(docId, year, "P")
+        whenever(houseFilingListService.getHouseFilingListRows(year)).thenReturn(listOf(filingListRow))
+
+        // Two filings for the same docId (e.g., reprocessed)
+        val filing1 = createFiling(docId, 1L, 1L)
+        val filing2 = createFiling(docId, 2L, 1L)
+        whenever(housePtrFilingRepository.findByDocId(docId)).thenReturn(listOf(filing1, filing2))
+
+        val transactions1 = listOf(createTransaction(docId, 1L, 1L))
+        val transactions2 = listOf(createTransaction(docId, 2L, 2L))
+
+        whenever(housePtrTransactionRepository.findByHousePtrFilingId(1L)).thenReturn(transactions1)
+        whenever(housePtrTransactionRepository.findByHousePtrFilingId(2L)).thenReturn(transactions2)
+
+        // When
+        val result = housePtrService.getTransactionsForYear(year)
+
+        // Then
+        assertEquals(2, result.size)
+        assertTrue(result.containsAll(transactions1 + transactions2))
     }
 
     // Helper methods

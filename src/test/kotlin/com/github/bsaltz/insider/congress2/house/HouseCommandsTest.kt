@@ -1,5 +1,6 @@
 package com.github.bsaltz.insider.congress2.house
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingList
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListRow
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListService
@@ -7,14 +8,18 @@ import com.github.bsaltz.insider.congress2.house.ptr.HousePtrDownload
 import com.github.bsaltz.insider.congress2.house.ptr.HousePtrFiling
 import com.github.bsaltz.insider.congress2.house.ptr.HousePtrService
 import com.github.bsaltz.insider.congress2.house.ptr.HousePtrStats
+import com.github.bsaltz.insider.congress2.house.ptr.HousePtrTransaction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.nio.file.Path
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -418,6 +423,151 @@ class HouseCommandsTest {
         assertEquals("Year cannot be in the future", exception.message)
     }
 
+    @Test
+    fun `export should write transactions to CSV with current year by default`(
+        @TempDir tempDir: Path,
+    ) {
+        // Given
+        val currentYear = clock.instant().atZone(clock.zone).year
+        val outputFile = tempDir.resolve("transactions.csv").toFile()
+        val transactions =
+            listOf(
+                createTransaction("doc1", 1L, "SP", "Apple Inc. (AAPL)", "P", "01/15/2025", "01/20/2025", "\$1,001 - \$15,000", 90),
+                createTransaction("doc2", 2L, "DC", "Microsoft Corp (MSFT)", "S", "02/10/2025", "02/15/2025", "\$15,001 - \$50,000", 85),
+            )
+
+        whenever(housePtrService.getTransactionsForYear(currentYear)).thenReturn(transactions)
+
+        // When
+        houseCommands.export(outputFile.absolutePath, null)
+
+        // Then
+        verify(housePtrService).getTransactionsForYear(currentYear)
+        assertTrue(outputFile.exists())
+
+        val lines = outputFile.readLines()
+        assertEquals(3, lines.size) // Header + 2 transactions
+        assertEquals("doc_id,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty", lines[0])
+        assertEquals("doc1,SP,Apple Inc. (AAPL),P,01/15/2025,01/20/2025,\$1,001 - \$15,000,90", lines[1])
+        assertEquals("doc2,DC,Microsoft Corp (MSFT),S,02/10/2025,02/15/2025,\$15,001 - \$50,000,85", lines[2])
+    }
+
+    @Test
+    fun `export should write transactions to CSV with specified year`(
+        @TempDir tempDir: Path,
+    ) {
+        // Given
+        val year = 2024
+        val outputFile = tempDir.resolve("transactions.csv").toFile()
+        val transactions =
+            listOf(
+                createTransaction("doc1", 1L, "SP", "Test Asset", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
+            )
+
+        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(transactions)
+
+        // When
+        houseCommands.export(outputFile.absolutePath, year)
+
+        // Then
+        verify(housePtrService).getTransactionsForYear(year)
+        assertTrue(outputFile.exists())
+    }
+
+    @Test
+    fun `export should handle empty transaction list`(
+        @TempDir tempDir: Path,
+    ) {
+        // Given
+        val year = 2024
+        val outputFile = tempDir.resolve("transactions.csv").toFile()
+
+        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(emptyList())
+
+        // When
+        houseCommands.export(outputFile.absolutePath, year)
+
+        // Then
+        verify(housePtrService).getTransactionsForYear(year)
+        // File should not be created when no transactions
+        assertTrue(!outputFile.exists())
+    }
+
+    @Test
+    fun `export should escape CSV fields with commas`(
+        @TempDir tempDir: Path,
+    ) {
+        // Given
+        val year = 2024
+        val outputFile = tempDir.resolve("transactions.csv").toFile()
+        val transactions =
+            listOf(
+                createTransaction("doc1", 1L, "SP", "Company, Inc.", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
+            )
+
+        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(transactions)
+
+        // When
+        houseCommands.export(outputFile.absolutePath, year)
+
+        // Then
+        val lines = outputFile.readLines()
+        assertEquals("doc1,SP,\"Company, Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
+    }
+
+    @Test
+    fun `export should escape CSV fields with quotes`(
+        @TempDir tempDir: Path,
+    ) {
+        // Given
+        val year = 2024
+        val outputFile = tempDir.resolve("transactions.csv").toFile()
+        val transactions =
+            listOf(
+                createTransaction("doc1", 1L, "SP", "Company \"Best\" Inc.", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
+            )
+
+        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(transactions)
+
+        // When
+        houseCommands.export(outputFile.absolutePath, year)
+
+        // Then
+        val lines = outputFile.readLines()
+        assertEquals("doc1,SP,\"Company \"\"Best\"\" Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
+    }
+
+    @Test
+    fun `export should reject years before 2008`(
+        @TempDir tempDir: Path,
+    ) {
+        // Given
+        val outputFile = tempDir.resolve("transactions.csv").toFile()
+
+        // When & Then
+        val exception =
+            assertThrows(IllegalArgumentException::class.java) {
+                houseCommands.export(outputFile.absolutePath, 2007)
+            }
+        assertEquals("Year must be 2008 or later", exception.message)
+    }
+
+    @Test
+    fun `export should reject future years`(
+        @TempDir tempDir: Path,
+    ) {
+        // Given
+        val currentYear = clock.instant().atZone(clock.zone).year
+        val outputFile = tempDir.resolve("transactions.csv").toFile()
+
+        // When & Then
+        val exception =
+            assertThrows(IllegalArgumentException::class.java) {
+                houseCommands.export(outputFile.absolutePath, currentYear + 1)
+            }
+        assertEquals("Year cannot be in the future", exception.message)
+    }
+
     // Helper methods
     private fun createFilingList(
         year: Int,
@@ -464,5 +614,29 @@ class HouseCommandsTest {
         docId = docId,
         rawLlmResponse = "{}",
         createdAt = fixedInstant,
+    )
+
+    private fun createTransaction(
+        docId: String,
+        filingId: Long,
+        owner: String,
+        asset: String,
+        transactionType: String,
+        transactionDate: String,
+        notificationDate: String,
+        amount: String,
+        certainty: Int,
+    ) = HousePtrTransaction(
+        id = 1L,
+        docId = docId,
+        housePtrFilingId = filingId,
+        owner = owner,
+        asset = asset,
+        transactionType = transactionType,
+        transactionDate = transactionDate,
+        notificationDate = notificationDate,
+        amount = amount,
+        certainty = certainty,
+        additionalData = JsonNodeFactory.instance.objectNode(),
     )
 }

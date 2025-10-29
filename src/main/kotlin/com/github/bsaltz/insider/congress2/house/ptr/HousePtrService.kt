@@ -234,4 +234,22 @@ class HousePtrService(
             transactionsExtracted = transactionsExtracted,
         )
     }
+
+    /**
+     * Get all PTR transactions for a specific year.
+     *
+     * @param year The year to get transactions for
+     * @return List of all transactions for that year
+     */
+    fun getTransactionsForYear(year: Int): List<HousePtrTransaction> {
+        val filingListRows = houseFilingListService.getHouseFilingListRows(year)
+        val typePFilingListRows = filingListRows.filter { it.filingType == "P" }
+
+        return typePFilingListRows.flatMap { row ->
+            val filings = housePtrFilingRepository.findByDocId(row.docId)
+            filings.flatMap { filing ->
+                housePtrTransactionRepository.findByHousePtrFilingId(filing.id!!)
+            }
+        }
+    }
 }
