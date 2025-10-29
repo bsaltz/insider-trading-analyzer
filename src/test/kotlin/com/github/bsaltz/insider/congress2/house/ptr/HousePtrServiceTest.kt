@@ -301,29 +301,23 @@ class HousePtrServiceTest {
             )
         whenever(houseFilingListService.getHouseFilingListRows(year)).thenReturn(filingListRows)
 
+        // Batch query mocks for type P filings only (docId1, docId2)
+        val typePDocIds = listOf(docId1, docId2)
+
         // Doc 1: fully processed with 2 transactions
         val download1 = createDownload(docId1, year, 1L)
-        whenever(housePtrDownloadRepository.findByDocId(docId1)).thenReturn(download1)
+        val download2 = createDownload(docId2, year, 2L)
+        whenever(housePtrDownloadRepository.findByDocIdIn(typePDocIds)).thenReturn(listOf(download1, download2))
 
         val ocrResult1 = createOcrResult(docId1, year, 1L, 1L)
-        whenever(housePtrOcrResultRepository.findByDocId(docId1)).thenReturn(ocrResult1)
+        whenever(housePtrOcrResultRepository.findByDocIdIn(typePDocIds)).thenReturn(listOf(ocrResult1))
 
         val filing1 = createFiling(docId1, 1L, 1L)
         whenever(housePtrFilingRepository.findByDocId(docId1)).thenReturn(listOf(filing1))
-
-        val transactions1 = listOf(createTransaction(docId1, 1L, 1L), createTransaction(docId1, 1L, 2L))
-        whenever(housePtrTransactionRepository.findByHousePtrFilingId(1L)).thenReturn(transactions1)
-
-        // Doc 2: only downloaded, no OCR or parsing
-        val download2 = createDownload(docId2, year, 2L)
-        whenever(housePtrDownloadRepository.findByDocId(docId2)).thenReturn(download2)
-        whenever(housePtrOcrResultRepository.findByDocId(docId2)).thenReturn(null)
         whenever(housePtrFilingRepository.findByDocId(docId2)).thenReturn(emptyList())
 
-        // Doc 3: filing type "A", should not be counted in type P stats
-        whenever(housePtrDownloadRepository.findByDocId(docId3)).thenReturn(null)
-        whenever(housePtrOcrResultRepository.findByDocId(docId3)).thenReturn(null)
-        whenever(housePtrFilingRepository.findByDocId(docId3)).thenReturn(emptyList())
+        val transactions1 = listOf(createTransaction(docId1, 1L, 1L), createTransaction(docId1, 1L, 2L))
+        whenever(housePtrTransactionRepository.findByHousePtrFilingIdIn(listOf(1L))).thenReturn(transactions1)
 
         // When
         val result = housePtrService.getStats(year)

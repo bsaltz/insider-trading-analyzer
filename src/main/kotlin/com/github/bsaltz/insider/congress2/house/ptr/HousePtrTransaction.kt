@@ -23,4 +23,16 @@ interface HousePtrTransactionRepository : CrudRepository<HousePtrTransaction, Lo
     fun findByHousePtrFilingId(housePtrFilingId: Long): List<HousePtrTransaction>
 
     fun findByDocId(docId: String): HousePtrTransaction?
+
+    /**
+     * Find all transactions matching any of the provided filing IDs.
+     * Useful for batch queries to avoid N+1 query problems.
+     */
+    fun findByHousePtrFilingIdIn(filingIds: List<Long>): List<HousePtrTransaction>
+
+    /**
+     * Find all transactions matching any of the provided document IDs.
+     * Useful for batch queries to avoid N+1 query problems.
+     */
+    fun findByDocIdIn(docIds: List<String>): List<HousePtrTransaction>
 }
