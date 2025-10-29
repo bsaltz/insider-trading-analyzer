@@ -260,23 +260,28 @@ class HouseCommands(
         validateYear(yearToUse, clock)
 
         println("Fetching transactions for year $yearToUse...")
-        val transactions = housePtrService.getTransactionsForYear(yearToUse)
+        val transactionsWithReps = housePtrService.getTransactionsWithRepresentativeForYear(yearToUse)
 
-        if (transactions.isEmpty()) {
+        if (transactionsWithReps.isEmpty()) {
             println("No transactions found for year $yearToUse")
             return
         }
 
-        println("Writing ${transactions.size} transactions to $outputPath...")
+        println("Writing ${transactionsWithReps.size} transactions to $outputPath...")
         java.io.File(outputPath).bufferedWriter().use { writer ->
             // Write CSV header
-            writer.write("doc_id,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty\n")
+            writer.write(
+                "doc_id,representative_name,state_district,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty\n",
+            )
 
             // Write each transaction
-            transactions.forEach { transaction ->
+            transactionsWithReps.forEach { txWithRep ->
+                val transaction = txWithRep.transaction
                 writer.write(
                     listOf(
                         transaction.docId,
+                        escapeCsv(txWithRep.getFullName()),
+                        txWithRep.stateDst,
                         transaction.owner,
                         escapeCsv(transaction.asset),
                         transaction.transactionType,
@@ -290,7 +295,7 @@ class HouseCommands(
             }
         }
 
-        println("Export complete: ${transactions.size} transactions written to $outputPath")
+        println("Export complete: ${transactionsWithReps.size} transactions written to $outputPath")
     }
 
     private fun escapeCsv(value: String): String =

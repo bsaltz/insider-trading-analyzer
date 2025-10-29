@@ -9,6 +9,7 @@ import com.github.bsaltz.insider.congress2.house.ptr.HousePtrFiling
 import com.github.bsaltz.insider.congress2.house.ptr.HousePtrService
 import com.github.bsaltz.insider.congress2.house.ptr.HousePtrStats
 import com.github.bsaltz.insider.congress2.house.ptr.HousePtrTransaction
+import com.github.bsaltz.insider.congress2.house.ptr.HousePtrTransactionWithRepresentative
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -460,26 +461,59 @@ class HouseCommandsTest {
         // Given
         val currentYear = clock.instant().atZone(clock.zone).year
         val outputFile = tempDir.resolve("transactions.csv").toFile()
-        val transactions =
+        val transactionsWithReps =
             listOf(
-                createTransaction("doc1", 1L, "SP", "Apple Inc. (AAPL)", "P", "01/15/2025", "01/20/2025", "\$1,001 - \$15,000", 90),
-                createTransaction("doc2", 2L, "DC", "Microsoft Corp (MSFT)", "S", "02/10/2025", "02/15/2025", "\$15,001 - \$50,000", 85),
+                createTransactionWithRep(
+                    "doc1",
+                    1L,
+                    "SP",
+                    "Apple Inc. (AAPL)",
+                    "P",
+                    "01/15/2025",
+                    "01/20/2025",
+                    "\$1,001 - \$15,000",
+                    90,
+                    "Hon.",
+                    "Nancy",
+                    "Pelosi",
+                    "",
+                    "CA-11",
+                ),
+                createTransactionWithRep(
+                    "doc2",
+                    2L,
+                    "DC",
+                    "Microsoft Corp (MSFT)",
+                    "S",
+                    "02/10/2025",
+                    "02/15/2025",
+                    "\$15,001 - \$50,000",
+                    85,
+                    "Rep.",
+                    "Kevin",
+                    "McCarthy",
+                    "",
+                    "CA-20",
+                ),
             )
 
-        whenever(housePtrService.getTransactionsForYear(currentYear)).thenReturn(transactions)
+        whenever(housePtrService.getTransactionsWithRepresentativeForYear(currentYear)).thenReturn(transactionsWithReps)
 
         // When
         houseCommands.export(outputFile.absolutePath, null)
 
         // Then
-        verify(housePtrService).getTransactionsForYear(currentYear)
+        verify(housePtrService).getTransactionsWithRepresentativeForYear(currentYear)
         assertTrue(outputFile.exists())
 
         val lines = outputFile.readLines()
         assertEquals(3, lines.size) // Header + 2 transactions
-        assertEquals("doc_id,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty", lines[0])
-        assertEquals("doc1,SP,Apple Inc. (AAPL),P,01/15/2025,01/20/2025,\$1,001 - \$15,000,90", lines[1])
-        assertEquals("doc2,DC,Microsoft Corp (MSFT),S,02/10/2025,02/15/2025,\$15,001 - \$50,000,85", lines[2])
+        assertEquals(
+            "doc_id,representative_name,state_district,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty",
+            lines[0],
+        )
+        assertEquals("doc1,Hon. Nancy Pelosi,CA-11,SP,Apple Inc. (AAPL),P,01/15/2025,01/20/2025,\$1,001 - \$15,000,90", lines[1])
+        assertEquals("doc2,Rep. Kevin McCarthy,CA-20,DC,Microsoft Corp (MSFT),S,02/10/2025,02/15/2025,\$15,001 - \$50,000,85", lines[2])
     }
 
     @Test
@@ -489,18 +523,18 @@ class HouseCommandsTest {
         // Given
         val year = 2024
         val outputFile = tempDir.resolve("transactions.csv").toFile()
-        val transactions =
+        val transactionsWithReps =
             listOf(
-                createTransaction("doc1", 1L, "SP", "Test Asset", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
+                createTransactionWithRep("doc1", 1L, "SP", "Test Asset", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
             )
 
-        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(transactions)
+        whenever(housePtrService.getTransactionsWithRepresentativeForYear(year)).thenReturn(transactionsWithReps)
 
         // When
         houseCommands.export(outputFile.absolutePath, year)
 
         // Then
-        verify(housePtrService).getTransactionsForYear(year)
+        verify(housePtrService).getTransactionsWithRepresentativeForYear(year)
         assertTrue(outputFile.exists())
     }
 
@@ -512,13 +546,13 @@ class HouseCommandsTest {
         val year = 2024
         val outputFile = tempDir.resolve("transactions.csv").toFile()
 
-        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(emptyList())
+        whenever(housePtrService.getTransactionsWithRepresentativeForYear(year)).thenReturn(emptyList())
 
         // When
         houseCommands.export(outputFile.absolutePath, year)
 
         // Then
-        verify(housePtrService).getTransactionsForYear(year)
+        verify(housePtrService).getTransactionsWithRepresentativeForYear(year)
         // File should not be created when no transactions
         assertTrue(!outputFile.exists())
     }
@@ -530,19 +564,19 @@ class HouseCommandsTest {
         // Given
         val year = 2024
         val outputFile = tempDir.resolve("transactions.csv").toFile()
-        val transactions =
+        val transactionsWithReps =
             listOf(
-                createTransaction("doc1", 1L, "SP", "Company, Inc.", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
+                createTransactionWithRep("doc1", 1L, "SP", "Company, Inc.", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
             )
 
-        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(transactions)
+        whenever(housePtrService.getTransactionsWithRepresentativeForYear(year)).thenReturn(transactionsWithReps)
 
         // When
         houseCommands.export(outputFile.absolutePath, year)
 
         // Then
         val lines = outputFile.readLines()
-        assertEquals("doc1,SP,\"Company, Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
+        assertEquals("doc1,Hon. John Doe,CA-01,SP,\"Company, Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
     }
 
     @Test
@@ -552,19 +586,29 @@ class HouseCommandsTest {
         // Given
         val year = 2024
         val outputFile = tempDir.resolve("transactions.csv").toFile()
-        val transactions =
+        val transactionsWithReps =
             listOf(
-                createTransaction("doc1", 1L, "SP", "Company \"Best\" Inc.", "P", "01/15/2024", "01/20/2024", "\$1,001 - \$15,000", 90),
+                createTransactionWithRep(
+                    "doc1",
+                    1L,
+                    "SP",
+                    "Company \"Best\" Inc.",
+                    "P",
+                    "01/15/2024",
+                    "01/20/2024",
+                    "\$1,001 - \$15,000",
+                    90,
+                ),
             )
 
-        whenever(housePtrService.getTransactionsForYear(year)).thenReturn(transactions)
+        whenever(housePtrService.getTransactionsWithRepresentativeForYear(year)).thenReturn(transactionsWithReps)
 
         // When
         houseCommands.export(outputFile.absolutePath, year)
 
         // Then
         val lines = outputFile.readLines()
-        assertEquals("doc1,SP,\"Company \"\"Best\"\" Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
+        assertEquals("doc1,Hon. John Doe,CA-01,SP,\"Company \"\"Best\"\" Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
     }
 
     @Test
@@ -669,5 +713,42 @@ class HouseCommandsTest {
         amount = amount,
         certainty = certainty,
         additionalData = JsonNodeFactory.instance.objectNode(),
+    )
+
+    private fun createTransactionWithRep(
+        docId: String,
+        filingId: Long,
+        owner: String,
+        asset: String,
+        transactionType: String,
+        transactionDate: String,
+        notificationDate: String,
+        amount: String,
+        certainty: Int,
+        prefix: String = "Hon.",
+        firstName: String = "John",
+        lastName: String = "Doe",
+        suffix: String = "",
+        stateDst: String = "CA-01",
+    ) = HousePtrTransactionWithRepresentative(
+        transaction =
+            HousePtrTransaction(
+                id = 1L,
+                docId = docId,
+                housePtrFilingId = filingId,
+                owner = owner,
+                asset = asset,
+                transactionType = transactionType,
+                transactionDate = transactionDate,
+                notificationDate = notificationDate,
+                amount = amount,
+                certainty = certainty,
+                additionalData = JsonNodeFactory.instance.objectNode(),
+            ),
+        prefix = prefix,
+        firstName = firstName,
+        lastName = lastName,
+        suffix = suffix,
+        stateDst = stateDst,
     )
 }

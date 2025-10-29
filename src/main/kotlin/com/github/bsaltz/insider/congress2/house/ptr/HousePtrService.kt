@@ -297,4 +297,35 @@ class HousePtrService(
             }
         }
     }
+
+    /**
+     * Get all PTR transactions for a specific year with representative information.
+     *
+     * This method enriches transaction data with the representative's name and district
+     * by joining with the filing list rows.
+     *
+     * @param year The year to get transactions for
+     * @return List of all transactions with representative info for that year
+     */
+    fun getTransactionsWithRepresentativeForYear(year: Int): List<HousePtrTransactionWithRepresentative> {
+        val filingListRows = houseFilingListService.getHouseFilingListRows(year)
+        val typePFilingListRows = filingListRows.filter { it.filingType == "P" }
+
+        return typePFilingListRows.flatMap { row ->
+            val filings = housePtrFilingRepository.findByDocId(row.docId)
+            filings.flatMap { filing ->
+                val transactions = housePtrTransactionRepository.findByHousePtrFilingId(filing.id!!)
+                transactions.map { transaction ->
+                    HousePtrTransactionWithRepresentative(
+                        transaction = transaction,
+                        prefix = row.prefix,
+                        firstName = row.first,
+                        lastName = row.last,
+                        suffix = row.suffix,
+                        stateDst = row.stateDst,
+                    )
+                }
+            }
+        }
+    }
 }
