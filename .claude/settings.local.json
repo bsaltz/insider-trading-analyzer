@@ -10,7 +10,8 @@
       "Bash(./gradlew compileKotlin:*)",
       "Bash(./gradlew ktlintFormat:*)",
       "Bash(git checkout:*)",
-      "Bash(./gradlew check:*)"
+      "Bash(./gradlew check:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": [],
     "ask": []
