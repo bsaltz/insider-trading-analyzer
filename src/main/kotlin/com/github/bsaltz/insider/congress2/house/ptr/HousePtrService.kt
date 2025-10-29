@@ -323,6 +323,7 @@ class HousePtrService(
                         lastName = row.last,
                         suffix = row.suffix,
                         stateDst = row.stateDst,
+                        filingDate = row.filingDate,
                     )
                 }
             }
