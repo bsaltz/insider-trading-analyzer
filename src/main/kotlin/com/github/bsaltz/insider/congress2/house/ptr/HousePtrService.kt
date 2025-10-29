@@ -234,31 +234,39 @@ class HousePtrService(
         val allFilingListRows = houseFilingListService.getHouseFilingListRows(year)
         val typePFilingListRows = allFilingListRows.filter { it.filingType == "P" }
 
-        // Count downloads for this year's filings
-        val downloadsCompleted =
-            typePFilingListRows.count { row ->
-                housePtrDownloadRepository.findByDocId(row.docId) != null
-            }
+        // Early return if no filings
+        if (typePFilingListRows.isEmpty()) {
+            return HousePtrStats(
+                year = year,
+                totalFilingListRows = allFilingListRows.size,
+                typePFilingListRows = 0,
+                downloadsCompleted = 0,
+                ocrResultsCompleted = 0,
+                filingsCompleted = 0,
+                transactionsExtracted = 0,
+            )
+        }
 
-        // Count OCR results for this year's filings
-        val ocrResultsCompleted =
-            typePFilingListRows.count { row ->
-                housePtrOcrResultRepository.findByDocId(row.docId) != null
-            }
+        // Extract all docIds for batch queries
+        val docIds = typePFilingListRows.map { it.docId }
 
-        // Count parsed filings for this year's filings
-        val filingsCompleted =
-            typePFilingListRows.count { row ->
-                housePtrFilingRepository.findByDocId(row.docId).isNotEmpty()
-            }
+        // Batch query: Count downloads for this year's filings
+        val downloadsCompleted = housePtrDownloadRepository.findByDocIdIn(docIds).size
 
-        // Count total transactions extracted
+        // Batch query: Count OCR results for this year's filings
+        val ocrResultsCompleted = housePtrOcrResultRepository.findByDocIdIn(docIds).size
+
+        // Batch query: Get all filings and count unique docIds that have filings
+        val allFilings = docIds.flatMap { housePtrFilingRepository.findByDocId(it) }
+        val filingsCompleted = allFilings.map { it.docId }.toSet().size
+
+        // Batch query: Count total transactions extracted
+        val filingIds = allFilings.mapNotNull { it.id }
         val transactionsExtracted =
-            typePFilingListRows.sumOf { row ->
-                val filings = housePtrFilingRepository.findByDocId(row.docId)
-                filings.sumOf { filing ->
-                    housePtrTransactionRepository.findByHousePtrFilingId(filing.id!!).size
-                }
+            if (filingIds.isNotEmpty()) {
+                housePtrTransactionRepository.findByHousePtrFilingIdIn(filingIds).size
+            } else {
+                0
             }
 
         return HousePtrStats(
