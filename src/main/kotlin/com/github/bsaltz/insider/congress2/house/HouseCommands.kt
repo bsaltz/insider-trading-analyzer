@@ -6,6 +6,9 @@ import org.springframework.shell.command.CommandRegistration
 import org.springframework.shell.command.annotation.Command
 import org.springframework.shell.command.annotation.Option
 import java.time.Clock
+import com.github.bsaltz.insider.congress2.house.HouseValidation.validateYear
+import com.github.bsaltz.insider.congress2.house.HouseValidation.validateYears
+import com.github.bsaltz.insider.congress2.house.HouseValidation.validateDocId
 
 /**
  * Commands for processing Congress House filings.
@@ -77,12 +80,11 @@ class HouseCommands(
         )
         years: List<Int>?,
     ) {
-        val years = years ?: listOf(clock.instant().atZone(clock.zone).year)
-        require(years.all { it >= 2008 }) { "Years must be 2008 or later" }
-        require(years.all { it <= clock.instant().atZone(clock.zone).year }) { "Years cannot be in the future" }
-        println("Processing all data for years: $years")
-        years.forEach { processYear(it) }
-        println("Processing completed for all years: $years")
+        val yearsToProcess = years ?: listOf(clock.instant().atZone(clock.zone).year)
+        validateYears(yearsToProcess, clock)
+        println("Processing all data for years: $yearsToProcess")
+        yearsToProcess.forEach { processYear(it) }
+        println("Processing completed for all years: $yearsToProcess")
     }
 
     @Command(
@@ -92,8 +94,7 @@ class HouseCommands(
                 "Downloads TSV data, fetches all PDFs for the year, runs OCR, and parses transactions.",
     )
     fun processYear(year: Int) {
-        require(year >= 2008) { "Year must be 2008 or later" }
-        require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
+        validateYear(year, clock)
         println("Processing data for year $year")
         val filingList = houseFilingListService.processYear(year)
         val filingListId = filingList.id ?: error("Filing list ID is null")
@@ -129,7 +130,7 @@ class HouseCommands(
                 "Downloads PDF, runs OCR, and parses transactions for the specified document ID.",
     )
     fun processFiling(docId: String) {
-        require(docId.isNotBlank()) { "Document ID cannot be blank" }
+        validateDocId(docId)
         println("Processing filing $docId")
         val result = housePtrService.processFilingListRow(docId, true)
         if (result != null) {
@@ -144,8 +145,7 @@ class HouseCommands(
         description = "Download, cache, and parse the TSV filing list for a specific year without processing individual filings.",
     )
     fun downloadTsv(year: Int) {
-        require(year >= 2008) { "Year must be 2008 or later" }
-        require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
+        validateYear(year, clock)
         println("Downloading TSV for year $year")
         val houseFilingList = houseFilingListService.processYear(year)
         println("TSV download and parsing completed for year $year: $houseFilingList")
@@ -156,7 +156,7 @@ class HouseCommands(
         description = "Download and cache a specific PDF filing by document ID without further processing.",
     )
     fun downloadPdf(docId: String) {
-        require(docId.isNotBlank()) { "Document ID cannot be blank" }
+        validateDocId(docId)
         println("Downloading PDF for filing $docId")
         val result = housePtrService.downloadPdf(docId, true)
         if (result != null) {
@@ -171,7 +171,7 @@ class HouseCommands(
         description = "Run OCR processing on an already-downloaded PDF filing using Google Cloud Vision API.",
     )
     fun ocr(docId: String) {
-        require(docId.isNotBlank()) { "Document ID cannot be blank" }
+        validateDocId(docId)
         println("Running OCR for filing $docId")
         housePtrService.runOcr(docId, true)
         println("OCR completed for filing $docId")
@@ -182,7 +182,7 @@ class HouseCommands(
         description = "Run LLM parsing on already-OCR'd text to extract structured transaction data from a filing.",
     )
     fun parse(docId: String) {
-        require(docId.isNotBlank()) { "Document ID cannot be blank" }
+        validateDocId(docId)
         println("Parsing filing $docId")
         housePtrService.parseFiling(docId, true)
         println("Parsing completed for filing $docId")
@@ -193,7 +193,7 @@ class HouseCommands(
         description = "Clear the cached ETag for a specific document ID to force re-download on next processing.",
     )
     fun clearCache(docId: String) {
-        require(docId.isNotBlank()) { "Document ID cannot be blank" }
+        validateDocId(docId)
         println("Clearing cache for filing $docId")
         TODO()
     }
@@ -211,10 +211,9 @@ class HouseCommands(
         )
         year: Int?,
     ) {
-        val year = year ?: clock.instant().atZone(clock.zone).year
-        require(year >= 2008) { "Year must be 2008 or later" }
-        require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
-        println("Refreshing etags for year $year")
+        val yearToUse = year ?: clock.instant().atZone(clock.zone).year
+        validateYear(yearToUse, clock)
+        println("Refreshing etags for year $yearToUse")
         TODO()
     }
 
@@ -231,10 +230,9 @@ class HouseCommands(
         )
         year: Int?,
     ) {
-        val year = year ?: clock.instant().atZone(clock.zone).year
-        require(year >= 2008) { "Year must be 2008 or later" }
-        require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
-        val stats = housePtrService.getStats(year)
+        val yearToUse = year ?: clock.instant().atZone(clock.zone).year
+        validateYear(yearToUse, clock)
+        val stats = housePtrService.getStats(yearToUse)
         println(stats.format())
     }
 
@@ -258,15 +256,14 @@ class HouseCommands(
         )
         year: Int?,
     ) {
-        val year = year ?: clock.instant().atZone(clock.zone).year
-        require(year >= 2008) { "Year must be 2008 or later" }
-        require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
+        val yearToUse = year ?: clock.instant().atZone(clock.zone).year
+        validateYear(yearToUse, clock)
 
-        println("Fetching transactions for year $year...")
-        val transactions = housePtrService.getTransactionsForYear(year)
+        println("Fetching transactions for year $yearToUse...")
+        val transactions = housePtrService.getTransactionsForYear(yearToUse)
 
         if (transactions.isEmpty()) {
-            println("No transactions found for year $year")
+            println("No transactions found for year $yearToUse")
             return
         }
 

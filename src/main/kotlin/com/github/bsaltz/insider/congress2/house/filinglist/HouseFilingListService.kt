@@ -1,5 +1,6 @@
 package com.github.bsaltz.insider.congress2.house.filinglist
 
+import com.github.bsaltz.insider.congress2.house.HouseConfig
 import com.github.bsaltz.insider.congress2.house.client.HouseHttpClient
 import com.github.bsaltz.insider.utils.ListUtil.component6
 import com.github.bsaltz.insider.utils.ListUtil.component7
@@ -64,7 +65,7 @@ class HouseFilingListService(
         return parse(downloadTsv(existingFilingList, force), force)
     }
 
-    private fun getListGcsUri(year: Int): String = "gs://insider-trading-analyzer/congress/house/disclosure-list/$year.zip"
+    private fun getListGcsUri(year: Int): String = HouseConfig.filingListGcsUri(year)
 
     private fun downloadTsv(
         houseFilingList: HouseFilingList,
@@ -120,7 +121,7 @@ class HouseFilingListService(
             }
 
             // Open the ZIP file and find the TSV file inside (e.g., 2025FD.txt)
-            val expectedFileName = "${houseFilingList.year}FD.txt"
+            val expectedFileName = HouseConfig.expectedFilingFileName(houseFilingList.year)
             ZipInputStream(Files.newInputStream(tempFile)).use { zipStream ->
                 var entry = zipStream.nextEntry
                 while (entry != null) {
