@@ -271,7 +271,7 @@ class HouseCommands(
         java.io.File(outputPath).bufferedWriter().use { writer ->
             // Write CSV header
             writer.write(
-                "doc_id,representative_name,state_district,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty\n",
+                "doc_id,filing_date,representative_name,state_district,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty\n",
             )
 
             // Write each transaction
@@ -280,6 +280,7 @@ class HouseCommands(
                 writer.write(
                     listOf(
                         transaction.docId,
+                        txWithRep.filingDate.toString(),
                         escapeCsv(txWithRep.getFullName()),
                         txWithRep.stateDst,
                         transaction.owner,

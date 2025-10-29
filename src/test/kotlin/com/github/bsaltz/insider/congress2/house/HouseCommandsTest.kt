@@ -509,11 +509,14 @@ class HouseCommandsTest {
         val lines = outputFile.readLines()
         assertEquals(3, lines.size) // Header + 2 transactions
         assertEquals(
-            "doc_id,representative_name,state_district,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty",
+            "doc_id,filing_date,representative_name,state_district,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty",
             lines[0],
         )
-        assertEquals("doc1,Hon. Nancy Pelosi,CA-11,SP,Apple Inc. (AAPL),P,01/15/2025,01/20/2025,\$1,001 - \$15,000,90", lines[1])
-        assertEquals("doc2,Rep. Kevin McCarthy,CA-20,DC,Microsoft Corp (MSFT),S,02/10/2025,02/15/2025,\$15,001 - \$50,000,85", lines[2])
+        assertEquals("doc1,2024-01-15,Hon. Nancy Pelosi,CA-11,SP,Apple Inc. (AAPL),P,01/15/2025,01/20/2025,\$1,001 - \$15,000,90", lines[1])
+        assertEquals(
+            "doc2,2024-01-15,Rep. Kevin McCarthy,CA-20,DC,Microsoft Corp (MSFT),S,02/10/2025,02/15/2025,\$15,001 - \$50,000,85",
+            lines[2],
+        )
     }
 
     @Test
@@ -576,7 +579,7 @@ class HouseCommandsTest {
 
         // Then
         val lines = outputFile.readLines()
-        assertEquals("doc1,Hon. John Doe,CA-01,SP,\"Company, Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
+        assertEquals("doc1,2024-01-15,Hon. John Doe,CA-01,SP,\"Company, Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
     }
 
     @Test
@@ -608,7 +611,10 @@ class HouseCommandsTest {
 
         // Then
         val lines = outputFile.readLines()
-        assertEquals("doc1,Hon. John Doe,CA-01,SP,\"Company \"\"Best\"\" Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90", lines[1])
+        assertEquals(
+            "doc1,2024-01-15,Hon. John Doe,CA-01,SP,\"Company \"\"Best\"\" Inc.\",P,01/15/2024,01/20/2024,\$1,001 - \$15,000,90",
+            lines[1],
+        )
     }
 
     @Test
@@ -730,6 +736,7 @@ class HouseCommandsTest {
         lastName: String = "Doe",
         suffix: String = "",
         stateDst: String = "CA-01",
+        filingDate: LocalDate = LocalDate.parse("2024-01-15"),
     ) = HousePtrTransactionWithRepresentative(
         transaction =
             HousePtrTransaction(
@@ -750,5 +757,6 @@ class HouseCommandsTest {
         lastName = lastName,
         suffix = suffix,
         stateDst = stateDst,
+        filingDate = filingDate,
     )
 }

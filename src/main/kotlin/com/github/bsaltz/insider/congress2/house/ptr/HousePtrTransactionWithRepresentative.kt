@@ -1,5 +1,7 @@
 package com.github.bsaltz.insider.congress2.house.ptr
 
+import java.time.LocalDate
+
 /**
  * A PTR transaction enriched with representative information from the filing list.
  *
@@ -13,6 +15,7 @@ data class HousePtrTransactionWithRepresentative(
     val lastName: String,
     val suffix: String,
     val stateDst: String,
+    val filingDate: LocalDate,
 ) {
     /**
      * Gets the full name of the representative.
