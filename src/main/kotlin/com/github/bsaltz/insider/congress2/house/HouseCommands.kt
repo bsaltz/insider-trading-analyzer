@@ -28,6 +28,7 @@ import java.time.Clock
  * congress house clear-cache <doc-id>  # Clear the cached etag for the given document id
  * congress house refresh-etags [--year <year>]  # Check all etags without downloading
  * congress house stats [--year <year>]  # Show processing stats
+ * congress house export --output <file> [--year <year>]  # Export transactions to CSV
  * ```
  *
  * Process commands cover the main workflows:
@@ -228,4 +229,69 @@ class HouseCommands(
         val stats = housePtrService.getStats(year)
         println(stats.format())
     }
+
+    @Command(
+        command = ["export"],
+        description = "Export PTR transactions for a specific year to a CSV file.",
+    )
+    fun export(
+        @Option(
+            longNames = ["--output"],
+            shortNames = ['o'],
+            description = "Output CSV file path",
+            required = true,
+        )
+        outputPath: String,
+        @Option(
+            longNames = ["--year"],
+            shortNames = ['y'],
+            description = "The year to export transactions for (default is the current year)",
+            required = false,
+        )
+        year: Int?,
+    ) {
+        val year = year ?: clock.instant().atZone(clock.zone).year
+        require(year >= 2008) { "Year must be 2008 or later" }
+        require(year <= clock.instant().atZone(clock.zone).year) { "Year cannot be in the future" }
+
+        println("Fetching transactions for year $year...")
+        val transactions = housePtrService.getTransactionsForYear(year)
+
+        if (transactions.isEmpty()) {
+            println("No transactions found for year $year")
+            return
+        }
+
+        println("Writing ${transactions.size} transactions to $outputPath...")
+        java.io.File(outputPath).bufferedWriter().use { writer ->
+            // Write CSV header
+            writer.write("doc_id,owner,asset,transaction_type,transaction_date,notification_date,amount,certainty\n")
+
+            // Write each transaction
+            transactions.forEach { transaction ->
+                writer.write(
+                    listOf(
+                        transaction.docId,
+                        transaction.owner,
+                        escapeCsv(transaction.asset),
+                        transaction.transactionType,
+                        transaction.transactionDate,
+                        transaction.notificationDate,
+                        transaction.amount,
+                        transaction.certainty.toString(),
+                    ).joinToString(","),
+                )
+                writer.write("\n")
+            }
+        }
+
+        println("Export complete: ${transactions.size} transactions written to $outputPath")
+    }
+
+    private fun escapeCsv(value: String): String =
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            "\"${value.replace("\"", "\"\"")}\""
+        } else {
+            value
+        }
 }
