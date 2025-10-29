@@ -342,12 +342,35 @@ class HousePtrServiceTest {
     // due to extension functions. These would be better tested as integration tests
 
     @Test
+    fun `processFilingListRow should skip processing when filing already exists and force is false`() {
+        // Given
+        val docId = "20250101-001"
+        val year = 2025
+        val filingListRow = createFilingListRow(docId, year)
+        val existingFiling = createFiling(docId, 1L, 1L)
+
+        whenever(housePtrFilingRepository.findByDocId(docId)).thenReturn(listOf(existingFiling))
+
+        // When
+        val result = housePtrService.processFilingListRow(filingListRow, force = false)
+
+        // Then
+        assertNotNull(result)
+        assertEquals(existingFiling, result)
+        verify(houseHttpClient, never()).getPtrEtag(any(), any())
+        verify(houseHttpClient, never()).fetchPtr(any(), any(), any())
+        verify(ocrProcessorService, never()).parsePdf(any())
+        verify(houseLlmService, never()).process(any())
+    }
+
+    @Test
     fun `processFilingListRow should return null when download fails`() {
         // Given
         val docId = "20250101-001"
         val year = 2025
         val filingListRow = createFilingListRow(docId, year)
 
+        whenever(housePtrFilingRepository.findByDocId(docId)).thenReturn(emptyList())
         whenever(houseFilingListService.getHouseFilingListRow(docId)).thenReturn(filingListRow)
         whenever(housePtrDownloadRepository.findByDocId(docId)).thenReturn(null)
         whenever(houseHttpClient.getPtrEtag(docId, year)).thenReturn("etag")

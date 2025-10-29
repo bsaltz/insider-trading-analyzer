@@ -37,6 +37,15 @@ class HousePtrService(
         houseFilingListRow: HouseFilingListRow,
         force: Boolean = false,
     ): HousePtrFiling? {
+        // Check if already fully processed (unless force=true)
+        if (!force) {
+            val existingFilings = housePtrFilingRepository.findByDocId(houseFilingListRow.docId)
+            if (existingFilings.isNotEmpty()) {
+                println("  ✓ Filing ${houseFilingListRow.docId} already processed, skipping")
+                return existingFilings.first()
+            }
+        }
+
         println("  → Step 1/3: Downloading PDF for ${houseFilingListRow.docId}...")
         val download = downloadPdf(houseFilingListRow.docId, houseFilingListRow.year, force)
         if (download == null) {
