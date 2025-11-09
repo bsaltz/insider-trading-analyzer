@@ -38,7 +38,32 @@ spring:
         model: gpt-oss:20b-cloud
         options:
           num-ctx: 16384 # 16k
+    mcp:
+      client:
+        enabled: false
+        stdio:
+          connections:
+            filesystem:
+              command: "npx"
+              args:
+                - "-y"
+                - "@modelcontextprotocol/server-filesystem"
+                - "${user.dir}/mcp/filesystem"
+            memory:
+              command: "npx"
+              args:
+                - "-y"
+                - "@modelcontextprotocol/server-memory"
+              env:
+                - "MEMORY_FILE_PATH": "${user.dir}/mcp/memory/memory.json"
+
 
 logging:
+  level:
+    org:
+      springframework:
+        web:
+          client:
+            RestClient: DEBUG
   threshold:
     console: ERROR

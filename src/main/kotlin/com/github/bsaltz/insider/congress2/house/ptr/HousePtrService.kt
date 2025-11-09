@@ -5,9 +5,6 @@ import com.github.bsaltz.insider.congress2.house.HouseConfig
 import com.github.bsaltz.insider.congress2.house.client.HouseHttpClient
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListRow
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListService
-import com.github.bsaltz.insider.congress2.house.llm.HouseLlmOutput
-import com.github.bsaltz.insider.congress2.house.llm.HouseLlmService
-import com.github.bsaltz.insider.congress2.house.llm.HouseLlmTransaction
 import com.github.bsaltz.insider.utils.StorageUtil.getResource
 import com.github.bsaltz.insider.vision.OcrProcessorService
 import com.google.cloud.spring.storage.GoogleStorageLocation
@@ -24,7 +21,7 @@ class HousePtrService(
     private val housePtrTransactionRepository: HousePtrTransactionRepository,
     private val houseHttpClient: HouseHttpClient,
     private val ocrProcessorService: OcrProcessorService,
-    private val houseLlmService: HouseLlmService,
+    private val housePtrLlmService: HousePtrLlmService,
     private val storage: Storage,
     private val clock: Clock,
 ) {
@@ -174,7 +171,7 @@ class HousePtrService(
                 it.readBytes().toString(Charsets.UTF_8)
             }
         println("    → Running LLM parsing on ${ocrResult.docId}...")
-        val (output, rawLlmResponse) = houseLlmService.process(ocrResultText)
+        val (output, rawLlmResponse) = housePtrLlmService.process(ocrResultText)
         println("    ✓ LLM parsing completed for ${ocrResult.docId}, saving ${output.transactions.size} transactions...")
         return output.saveHouseLlmOutput(ocrResult, rawLlmResponse)
     }

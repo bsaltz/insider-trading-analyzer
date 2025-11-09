@@ -1,5 +1,6 @@
 package com.github.bsaltz.insider.congress2.house.llm
 
+import com.github.bsaltz.insider.congress2.house.ptr.HousePtrLlmService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -18,7 +19,7 @@ import org.springframework.ai.chat.prompt.Prompt
 
 class HouseLlmServiceTest {
     private val chatModel = mock<ChatModel>()
-    private val houseLlmService = HouseLlmService(chatModel)
+    private val housePtrLlmService = HousePtrLlmService(chatModel)
 
     @Test
     fun `process should successfully parse OCR result and return LLM output`() {
@@ -65,7 +66,7 @@ class HouseLlmServiceTest {
         whenever(chatModel.call(any<Prompt>())).thenReturn(chatResponse)
 
         // When
-        val result = houseLlmService.process(ocrParseResult)
+        val result = housePtrLlmService.process(ocrParseResult)
 
         // Then
         assertNotNull(result)
@@ -148,7 +149,7 @@ class HouseLlmServiceTest {
         whenever(chatModel.call(any<Prompt>())).thenReturn(chatResponse)
 
         // When
-        val result = houseLlmService.process(ocrParseResult)
+        val result = housePtrLlmService.process(ocrParseResult)
 
         // Then
         val (output, _) = result
@@ -190,7 +191,7 @@ class HouseLlmServiceTest {
         whenever(chatModel.call(any<Prompt>())).thenReturn(chatResponse)
 
         // When
-        val result = houseLlmService.process(ocrParseResult)
+        val result = housePtrLlmService.process(ocrParseResult)
 
         // Then
         val (output, _) = result
@@ -221,7 +222,7 @@ class HouseLlmServiceTest {
         whenever(chatModel.call(any<Prompt>())).thenReturn(chatResponse)
 
         // When
-        houseLlmService.process(ocrParseResult)
+        housePtrLlmService.process(ocrParseResult)
 
         // Then
         argumentCaptor<Prompt>().apply {
@@ -261,7 +262,7 @@ class HouseLlmServiceTest {
         whenever(chatModel.call(any<Prompt>())).thenReturn(chatResponse)
 
         // When
-        houseLlmService.process(ocrParseResult)
+        housePtrLlmService.process(ocrParseResult)
 
         // Then
         argumentCaptor<Prompt>().apply {
@@ -287,7 +288,7 @@ class HouseLlmServiceTest {
 
         // When & Then - Empty string causes JSON parsing to fail
         assertThrows(Exception::class.java) {
-            houseLlmService.process(ocrParseResult)
+            housePtrLlmService.process(ocrParseResult)
         }
     }
 
@@ -301,7 +302,7 @@ class HouseLlmServiceTest {
 
         // When & Then
         assertThrows(Exception::class.java) {
-            houseLlmService.process(ocrParseResult)
+            housePtrLlmService.process(ocrParseResult)
         }
     }
 
@@ -320,7 +321,7 @@ class HouseLlmServiceTest {
 
         // When & Then
         assertThrows(Exception::class.java) {
-            houseLlmService.process(ocrParseResult)
+            housePtrLlmService.process(ocrParseResult)
         }
     }
 
@@ -333,7 +334,7 @@ class HouseLlmServiceTest {
 
         // When & Then
         assertThrows(RuntimeException::class.java) {
-            houseLlmService.process(ocrParseResult)
+            housePtrLlmService.process(ocrParseResult)
         }
     }
 
@@ -363,7 +364,7 @@ class HouseLlmServiceTest {
         whenever(chatModel.call(any<Prompt>())).thenReturn(chatResponse)
 
         // When
-        val result = houseLlmService.process(ocrParseResult)
+        val result = housePtrLlmService.process(ocrParseResult)
 
         // Then
         val (output, _) = result
@@ -400,7 +401,7 @@ class HouseLlmServiceTest {
         whenever(chatModel.call(any<Prompt>())).thenReturn(chatResponse)
 
         // When
-        val result = houseLlmService.process(longOcrResult)
+        val result = housePtrLlmService.process(longOcrResult)
 
         // Then
         val (output, _) = result

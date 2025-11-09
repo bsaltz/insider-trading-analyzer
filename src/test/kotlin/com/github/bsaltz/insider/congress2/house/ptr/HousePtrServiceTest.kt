@@ -5,7 +5,6 @@ import com.github.bsaltz.insider.congress2.house.client.HouseHttpClient
 import com.github.bsaltz.insider.congress2.house.client.StoredResponse
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListRow
 import com.github.bsaltz.insider.congress2.house.filinglist.HouseFilingListService
-import com.github.bsaltz.insider.congress2.house.llm.HouseLlmService
 import com.github.bsaltz.insider.vision.OcrProcessorService
 import com.google.cloud.spring.storage.GoogleStorageLocation
 import com.google.cloud.storage.Storage
@@ -35,7 +34,7 @@ class HousePtrServiceTest {
     private val housePtrTransactionRepository = mock<HousePtrTransactionRepository>()
     private val houseHttpClient = mock<HouseHttpClient>()
     private val ocrProcessorService = mock<OcrProcessorService>()
-    private val houseLlmService = mock<HouseLlmService>()
+    private val housePtrLlmService = mock<HousePtrLlmService>()
     private val storage = mock<Storage>()
     private val fixedInstant = Instant.parse("2025-09-26T10:30:00Z").truncatedTo(ChronoUnit.MICROS)
     private val clock = Clock.fixed(fixedInstant, ZoneOffset.UTC)
@@ -49,7 +48,7 @@ class HousePtrServiceTest {
             housePtrTransactionRepository = housePtrTransactionRepository,
             houseHttpClient = houseHttpClient,
             ocrProcessorService = ocrProcessorService,
-            houseLlmService = houseLlmService,
+            housePtrLlmService = housePtrLlmService,
             storage = storage,
             clock = clock,
         )
@@ -354,7 +353,7 @@ class HousePtrServiceTest {
         verify(houseHttpClient, never()).getPtrEtag(any(), any())
         verify(houseHttpClient, never()).fetchPtr(any(), any(), any())
         verify(ocrProcessorService, never()).parsePdf(any())
-        verify(houseLlmService, never()).process(any())
+        verify(housePtrLlmService, never()).process(any())
     }
 
     @Test
@@ -376,7 +375,7 @@ class HousePtrServiceTest {
         // Then
         assertNull(result)
         verify(ocrProcessorService, never()).parsePdf(any())
-        verify(houseLlmService, never()).process(any())
+        verify(housePtrLlmService, never()).process(any())
     }
 
     @Test

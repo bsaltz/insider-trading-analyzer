@@ -1,4 +1,4 @@
-package com.github.bsaltz.insider.congress2.house.llm
+package com.github.bsaltz.insider.congress2.house.ptr
 
 import org.springframework.ai.chat.messages.UserMessage
 import org.springframework.ai.chat.model.ChatModel
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @Command
-class HouseLlmService(
+class HousePtrLlmService(
     private val chatModel: ChatModel,
 ) {
     private val initialPromptTemplate =

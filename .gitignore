@@ -40,3 +40,4 @@ out/
 
 ### Misc ###
 /insider-trading-analyzer.log
+/src/main/resources/application-local.yml
